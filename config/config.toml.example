@@ -1,0 +1,9 @@
+url = ""
+
+[[Users]]
+login = ""
+password = "" #sha256
+
+[github]
+clientId = ""
+ClientSecret = ""
