@@ -4,6 +4,7 @@ import (
 	"bicycle-ci/models"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -114,7 +115,7 @@ func (gh GitHub) LoadProjects() (projects map[int]models.Project) {
 		project := models.Project{
 			UserId:        gh.Data.UserId,
 			Name:          value.FullName,
-			Provider:      gh.Data.ProviderType,
+			Provider:      gh.Data.Id,
 			RepoId:        value.Id,
 			RepoName:      &value.Name,
 			RepoOwnerName: &value.OwnerLogin,
@@ -123,6 +124,21 @@ func (gh GitHub) LoadProjects() (projects map[int]models.Project) {
 
 		projects[project.RepoId] = project
 	}
+
+	return
+}
+
+// Загрузить один репозиторий
+func (gh GitHub) LoadProjectByName(name string) (project models.Project) {
+	repo := getRepository(gh.Data.ProviderAccountLogin, name, gh.Data.ProviderAuthToken)
+
+	project.UserId = gh.Data.UserId
+	project.Name = repo.FullName
+	project.Provider = gh.Data.Id
+	project.RepoId = repo.Id
+	project.RepoName = &repo.Name
+	project.RepoOwnerName = &repo.OwnerLogin
+	project.RepoOwnerId = &repo.OwnerId
 
 	return
 }
@@ -169,6 +185,22 @@ func getRepositories(token string) (repos []GitHubRepo) {
 	err = json.Unmarshal(response, &repos)
 	if err != nil {
 		log.Fatal("Can't parse user repos from response. ", err, string(response))
+		return
+	}
+
+	return
+}
+
+// Подгружает список репозиториев
+func getRepository(ownerLogin string, repoName string, token string) (repo GitHubRepo) {
+	response, err := get(fmt.Sprintf("%v/repos/%v/%v", config.ApiHost, ownerLogin, repoName), make(map[string]string), token)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(response, &repo)
+	if err != nil {
+		log.Fatal("Can't parse user one repo from response. ", err, string(response))
 		return
 	}
 

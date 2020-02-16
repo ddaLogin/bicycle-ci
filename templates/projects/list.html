@@ -17,21 +17,20 @@
                         <th scope="row">{{ $project.Id }}</th>
                         <td>{{ $project.Name }}</td>
                         <td>
-                            <span class="badge badge-success">Success</span>
+                            {{ if $project.Status }}
+                                <span class="badge badge-success">Enabled</span>
+                            {{ else }}
+                                <span class="badge badge-info">Not enabled</span>
+                            {{ end }}
                         </td>
                         <td>
-                            <!-- Example split danger button -->
+                            <!-- Example single danger button -->
                             <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-danger">Action</button>
-                                <button type="button" class="btn btn-sm btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="sr-only">Toggle Dropdown</span>
+                                <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Actions
                                 </button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#">Action</a>
-                                    <a class="dropdown-item" href="#">Another action</a>
-                                    <a class="dropdown-item" href="#">Something else here</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#">Separated link</a>
+                                    <a class="dropdown-item" href="/builds/run?projectId={{ $project.Id }}">Run Build</a>
                                 </div>
                             </div>
                         </td>
