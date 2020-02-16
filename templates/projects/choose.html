@@ -1,0 +1,40 @@
+{{define "content"}}
+    <div class="container-fluid">
+        <h1 class="display-5">Your repos</h1>
+
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range $key, $project := .Content.ProjectsToEnable }}
+                    <tr>
+                        <td>{{ $project.Name }}</td>
+                        <td>
+                            {{ if $project.Status }}
+                                <span class="badge badge-success">Enabled</span>
+                            {{ else }}
+                                <span class="badge badge-info">Not enabled</span>
+                            {{ end }}
+                        </td>
+                        <td>
+                            {{ if not $project.Status }}
+                                <a href="#" class="btn btn-sm btn-outline-success">Enable</a>
+                            {{ end }}
+                        </td>
+                    </tr>
+                {{ else }}
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            <h1 class="display-5">Empty list.</h1>
+                        </td>
+                    </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{end}}

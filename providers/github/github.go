@@ -40,8 +40,24 @@ type GitHubUser struct {
 	Login string `json:"login"`
 }
 
+// GitHub репозиторий
+type GitHubRepo struct {
+	Id         int    `json:"id"`
+	Name       string `json:"name"`
+	FullName   string `json:"full_name"`
+	OwnerLogin string `json:"owner.login"`
+	OwnerId    string `json:"owner.id"`
+}
+
 // GitHub провайдер
-type GitHub struct{}
+type GitHub struct {
+	Data models.ProviderData
+}
+
+// Название провайдера
+func (gh *GitHub) SetProviderData(providerData models.ProviderData) {
+	gh.Data = providerData
+}
 
 // Название провайдера
 func (gh GitHub) GetTitle() string {
@@ -72,7 +88,7 @@ func (gh GitHub) OAuthCallback(req *http.Request) string {
 }
 
 // Запрос на основную информацию аккаунта
-func (gh GitHub) GetProviderData(provider *models.ProviderData) {
+func (gh GitHub) UpdateProviderData(provider *models.ProviderData) {
 	response, err := get(config.ApiHost+"/user", make(map[string]string), provider.ProviderAuthToken)
 	if err != nil {
 		return
@@ -81,12 +97,34 @@ func (gh GitHub) GetProviderData(provider *models.ProviderData) {
 	user := GitHubUser{}
 	err = json.Unmarshal(response, &user)
 	if err != nil {
-		log.Fatal("Can't parse GitHub provider data from response. ", err, response)
+		log.Fatal("Can't parse GitHub provider data from response. ", err, string(response))
 		return
 	}
 
 	provider.ProviderAccountId = user.Id
 	provider.ProviderAccountLogin = user.Login
+}
+
+// Загрузить список репозиториев
+func (gh GitHub) LoadProjects() (projects map[int]models.Project) {
+	repos := getRepositories(gh.Data.ProviderAuthToken)
+	projects = make(map[int]models.Project)
+
+	for _, value := range repos {
+		project := models.Project{
+			UserId:        gh.Data.UserId,
+			Name:          value.FullName,
+			Provider:      gh.Data.ProviderType,
+			RepoId:        value.Id,
+			RepoName:      &value.Name,
+			RepoOwnerName: &value.OwnerLogin,
+			RepoOwnerId:   &value.OwnerId,
+		}
+
+		projects[project.RepoId] = project
+	}
+
+	return
 }
 
 // Запрашивает авторизационый токен
@@ -109,7 +147,7 @@ func getAccessToken(code string) (token string) {
 
 	err = json.Unmarshal(response, &accessToken)
 	if err != nil {
-		log.Fatal("Can't parse GitHub access token from response. ", err, response)
+		log.Fatal("Can't parse GitHub access token from response. ", err, string(response))
 		return
 	}
 
@@ -118,39 +156,24 @@ func getAccessToken(code string) (token string) {
 	return
 }
 
-//
+// Подгружает список репозиториев
+func getRepositories(token string) (repos []GitHubRepo) {
+	params := make(map[string]string)
+	params["affiliation"] = "owner"
 
-//
-//// Репозиторий пользователя
-//type Repo struct {
-//	Id       int    `json:"id"`
-//	Name     string `json:"name"`
-//	FullName string `json:"full_name"`
-//	Owner    string `json:"owner.login"`
-//}
-//
-//// Web hook
-//type Hook struct {
-//	Id int `json:"id"`
+	response, err := get(config.ApiHost+"/user/repos", params, token)
+	if err != nil {
+		return
+	}
 
-//// Подгружает список репозиториев
-//func GetRepos() (repos []Repo) {
-//	params := make(map[string]string)
-//	params["affiliation"] = "owner"
-//
-//	response, err := get(apiHost + "/user/repos", params)
-//	if err != nil {
-//		return
-//	}
-//
-//	err = json.Unmarshal(response, &repos)
-//	if err != nil {
-//		log.Fatal("Can't parse user repos from response. ", err, response)
-//		return
-//	}
-//
-//	return
-//}
+	err = json.Unmarshal(response, &repos)
+	if err != nil {
+		log.Fatal("Can't parse user repos from response. ", err, string(response))
+		return
+	}
+
+	return
+}
 
 //// Подписываемся на события репозитория
 //func CreatePushHook(owner string, repo string) (hook Hook) {
@@ -174,7 +197,7 @@ func getAccessToken(code string) (token string) {
 //
 //	err = json.Unmarshal(response, &hook)
 //	if err != nil {
-//		log.Fatal("Can't parse hook response. ", err, response)
+//		log.Fatal("Can't parse hook response. ", err, string(response))
 //		return
 //	}
 //

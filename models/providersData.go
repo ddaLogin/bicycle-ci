@@ -46,7 +46,7 @@ func (pd ProviderData) Save() bool {
 }
 
 // Получение подключенного провайдера пользователя по типу
-func GetProviderByUserAndType(userId int, providerType int) (provider ProviderData) {
+func GetProviderDataByUserAndType(userId int, providerType int) (provider ProviderData) {
 	db := database.Db()
 	defer db.Close()
 
@@ -67,7 +67,37 @@ func GetProviderByUserAndType(userId int, providerType int) (provider ProviderDa
 			&provider.ProviderAccountLogin,
 		)
 		if err != nil {
-			log.Println("Can't scan provider by user id and typ. ", err)
+			log.Println("Can't scan provider by user id and type. ", err)
+			return
+		}
+	}
+
+	return
+}
+
+// Получение провайдера по ID
+func GetProviderDataById(id string) (provider ProviderData) {
+	db := database.Db()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM providers WHERE id = ?", id)
+	if err != nil {
+		log.Println("Can't get provider by id. ", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(
+			&provider.Id,
+			&provider.UserId,
+			&provider.ProviderType,
+			&provider.ProviderAuthToken,
+			&provider.ProviderAccountId,
+			&provider.ProviderAccountLogin,
+		)
+		if err != nil {
+			log.Println("Can't scan provider by id. ", err)
 			return
 		}
 	}

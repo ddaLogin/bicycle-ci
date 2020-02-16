@@ -11,16 +11,18 @@ const GITHUB_TYPE = 1
 
 // Интерфейс VCS провадеров
 type ProviderInterface interface {
-	GetTitle() string                              // Название провайдера
-	GetImageUrl() string                           // Ссылка на картинку
-	GetAuthLink() string                           // Генерация ссылки для OAuth авторизации
-	OAuthCallback(req *http.Request) string        // Обработка oAuth авторизации
-	GetProviderData(provider *models.ProviderData) // Запрос на основную информацию аккаунта
+	SetProviderData(providerData models.ProviderData) // Устанавливает данные провайдера
+	GetTitle() string                                 // Название провайдера
+	GetImageUrl() string                              // Ссылка на картинку
+	GetAuthLink() string                              // Генерация ссылки для OAuth авторизации
+	OAuthCallback(req *http.Request) string           // Обработка oAuth авторизации
+	UpdateProviderData(provider *models.ProviderData) // Запрос на основную информацию аккаунта
+	LoadProjects() (projects map[int]models.Project)  // Загрузить список репозиториев
 }
 
 // Список всех доступных VCS провайдеров
 func GetAvailableProviders() (list []ProviderInterface) {
-	list = append(list, github.GitHub{})
+	list = append(list, &github.GitHub{})
 	return
 }
 
@@ -28,7 +30,7 @@ func GetAvailableProviders() (list []ProviderInterface) {
 func GetProviderByType(providerType int) (provider ProviderInterface) {
 
 	if providerType == GITHUB_TYPE {
-		provider = github.GitHub{}
+		provider = &github.GitHub{}
 	}
 
 	return

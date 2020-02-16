@@ -5,16 +5,21 @@ import (
 	"log"
 )
 
+// Статусы проектов
+const STATUS_NOT_ENABLED = 0 // Проект не активирован
+const STATUS_ENABLED = 1     // Проект активирован
+
 // Модель проекта
 type Project struct {
 	Id            int     // Идентификатор проекта
 	UserId        int     // Владелец проекта
 	Name          string  // Имя проекта
 	Provider      int     // Идентификатор провайдера репозитория
-	RepoId        *int    // Идентификатор репозитория
+	RepoId        int     // Идентификатор репозитория
 	RepoName      *string // Имя репозитория
 	RepoOwnerName *string // Логин владельца репозитория
 	RepoOwnerId   *string // Идентификатор владельца репозитория
+	Status        int     // Статус проекта
 }
 
 // Получить проекты пользователя

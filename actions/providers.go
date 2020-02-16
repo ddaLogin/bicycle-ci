@@ -5,6 +5,7 @@ import (
 	"bicycle-ci/models"
 	"bicycle-ci/providers"
 	"bicycle-ci/templates"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -23,8 +24,6 @@ type ProvidersListPage struct {
 func ProviderRoutes() {
 	http.Handle("/providers/list", auth.RequireAuthentication(providersList))
 	http.Handle("/providers/callback", auth.RequireAuthentication(oAuthCallback))
-
-	//http.Handle("/providers/github/repos", auth.RequireAuthentication(gitHubRepos))
 }
 
 // Страница провайдеров
@@ -53,17 +52,16 @@ func oAuthCallback(w http.ResponseWriter, req *http.Request, user models.User) {
 		return
 	}
 
-	providerModel := models.ProviderData{UserId: user.Id, ProviderType: providerType, ProviderAuthToken: providerToken}
-	provider.GetProviderData(&providerModel)
+	providerData := models.GetProviderDataByUserAndType(user.Id, providerType)
 
-	providerModel.Save()
+	if (models.ProviderData{} == providerData) {
+		providerData = models.ProviderData{UserId: user.Id, ProviderType: providerType}
+	}
 
-	http.Redirect(w, req, "/providers/repos?providerType="+req.URL.Query().Get("providerType"), http.StatusSeeOther)
+	providerData.ProviderAuthToken = providerToken
+	provider.UpdateProviderData(&providerData)
+
+	providerData.Save()
+
+	http.Redirect(w, req, "/projects/choose?providerId="+fmt.Sprintf("%v", providerData.Id), http.StatusSeeOther)
 }
-
-//// Страница репозиториев с гитхаба
-//func gitHubRepos(w http.ResponseWriter, req *http.Request, user models.User) {
-//	templates.Render(w, "templates/providers/repos.html", ReposPage{
-//		Repos: github.GetRepos(),
-//	}, user)
-//}

@@ -4,7 +4,7 @@
         <ul class="list-group list-group-flush">
             {{ range $key, $value := .Repos }}
                 <li class="list-group-item">
-                    <a href="/projects/enable?repo={{ $value.Name }}&owner={{ $value.Owner }}">{{ $value.FullName }}</a>
+                    <a href="/projects/choose?repo={{ $value.Name }}&owner={{ $value.Owner }}">{{ $value.FullName }}</a>
                 </li>
             {{ end }}
         </ul>

@@ -3,6 +3,7 @@ package actions
 import (
 	"bicycle-ci/auth"
 	"bicycle-ci/models"
+	"bicycle-ci/providers"
 	"bicycle-ci/templates"
 	"net/http"
 )
@@ -12,10 +13,15 @@ type ProjectListPage struct {
 	Projects []models.Project
 }
 
+// Страница активации проектов
+type ProjectEnablePage struct {
+	ProjectsToEnable map[int]models.Project
+}
+
 // Регистрация роутов по проектам
 func ProjectRoutes() {
 	http.Handle("/projects/list", auth.RequireAuthentication(projectsList))
-	http.Handle("/projects/enable", auth.RequireAuthentication(projectsEnable))
+	http.Handle("/projects/choose", auth.RequireAuthentication(projectsChoose))
 }
 
 // Страница проектов пользователя
@@ -26,12 +32,31 @@ func projectsList(w http.ResponseWriter, req *http.Request, user models.User) {
 }
 
 // Страница подключения проекта
-func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) {
-	//owner := req.URL.Query().Get("owner")
-	//repo := req.URL.Query().Get("repo")
-	////hook := github.CreatePushHook(owner, repo)
-	//
-	//fmt.Printf("%+v", hook)
-	//
-	//http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) {
+	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
+
+	if (models.ProviderData{}) == providerData && providerData.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	provider := providers.GetProviderByType(providerData.ProviderType)
+
+	if provider == nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	provider.SetProviderData(providerData)
+	projectsToEnable := provider.LoadProjects()
+
+	for _, value := range models.GetProjectsByUserId(user.Id) {
+		if val, ok := projectsToEnable[value.RepoId]; ok {
+			val.Status = models.STATUS_ENABLED
+		}
+	}
+
+	templates.Render(w, "templates/projects/choose.html", ProjectEnablePage{
+		ProjectsToEnable: projectsToEnable,
+	}, user)
 }
