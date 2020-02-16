@@ -1,6 +1,7 @@
 package github
 
 import (
+	"bicycle-ci/models"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -10,34 +11,54 @@ import (
 	"time"
 )
 
-const host = "https://github.com"
+// Конфиг GitHub провайдера
+type Config struct {
+	ClientId     string
+	ClientSecret string
+	OAuthHost    string
+	ApiHost      string
+	Image        string
+}
 
-// Авторизационный токен
-type AccessToken struct {
+var config Config
+
+// Установка настроек
+func SetConfig(cfg Config) {
+	config = cfg
+}
+
+// Авторизационный АПИ токен
+type accessToken struct {
 	Token     string `json:"access_token"`
 	TokenType string `json:"token_type"`
 	Scope     string `json:"scope"`
 }
 
-// Конфиг GitHub провайдера
-type Config struct {
-	ClientId     string
-	ClientSecret string
+// Пользователь GitHab'а
+type GitHubUser struct {
+	Id    int    `json:"id"`
+	Login string `json:"login"`
 }
 
-var cfg Config
+// GitHub провайдер
+type GitHub struct{}
 
-// Установка настроек
-func SetConfig(c Config) {
-	cfg = c
+// Название провайдера
+func (gh GitHub) GetTitle() string {
+	return "GitHub"
 }
 
-// Возвращает ссылку для авторизации в гитхабе
-func GetOAuthLink() string {
-	link, _ := url.Parse(host + "/login/oauth/authorize")
+// Ссылка на картинку
+func (gh GitHub) GetImageUrl() string {
+	return config.Image
+}
+
+// Генерация ссылки для OAuth авторизации
+func (gh GitHub) GetAuthLink() string {
+	link, _ := url.Parse(config.OAuthHost + "/login/oauth/authorize")
 	query, _ := url.ParseQuery(link.RawQuery)
 
-	query.Add("client_id", cfg.ClientId)
+	query.Add("client_id", config.ClientId)
 	query.Add("scope", "repo")
 
 	link.RawQuery = query.Encode()
@@ -45,71 +66,162 @@ func GetOAuthLink() string {
 	return link.String()
 }
 
+// Обработка oAuth авторизации
+func (gh GitHub) OAuthCallback(req *http.Request) string {
+	return getAccessToken(req.URL.Query().Get("code"))
+}
+
+// Запрос на основную информацию аккаунта
+func (gh GitHub) GetProviderData(provider *models.ProviderData) {
+	response, err := get(config.ApiHost+"/user", make(map[string]string), provider.ProviderAuthToken)
+	if err != nil {
+		return
+	}
+
+	user := GitHubUser{}
+	err = json.Unmarshal(response, &user)
+	if err != nil {
+		log.Fatal("Can't parse GitHub provider data from response. ", err, response)
+		return
+	}
+
+	provider.ProviderAccountId = user.Id
+	provider.ProviderAccountLogin = user.Login
+}
+
 // Запрашивает авторизационый токен
-func GetAccessToken(code string) (token AccessToken) {
-	link, _ := url.Parse(host + "/login/oauth/access_token")
+func getAccessToken(code string) (token string) {
+	link, _ := url.Parse(config.OAuthHost + "/login/oauth/access_token")
 	query, _ := url.ParseQuery(link.RawQuery)
 
-	query.Add("client_id", cfg.ClientId)
-	query.Add("client_secret", cfg.ClientSecret)
+	query.Add("client_id", config.ClientId)
+	query.Add("client_secret", config.ClientSecret)
 	query.Add("code", code)
 
 	link.RawQuery = query.Encode()
 
-	response, err := post(link.String(), []byte(``))
+	response, err := post(link.String(), []byte(``), "")
 	if err != nil {
 		return
 	}
 
-	err = json.Unmarshal(response, &token)
+	accessToken := accessToken{}
+
+	err = json.Unmarshal(response, &accessToken)
 	if err != nil {
-		log.Fatal("Can't parse access token from response", err, response)
+		log.Fatal("Can't parse GitHub access token from response. ", err, response)
 		return
 	}
+
+	token = accessToken.Token
 
 	return
 }
 
-// Подписываемся на события репозитория
-func CreatePushHook(owner string, repo string) {
-	//url := fmt.Sprintf("%s/repost/%s/%s/hooks", host, owner, repo)
-	//
-	//query := []byte(`{
-	//	"name": "web",
-	//	"active": true,
-	//	"events": [
-	//		"push",
-	//		"pull_request"
-	//	],
-	//	"config": {
-	//		"url": "http://localhost:8090/github/hook2",
-	//		"content_type": "json",
-	//		"insecure_ssl": "0"
-	//	}
-	//}`)
+//
 
-	//result, _ := post(url, query)
+//
+//// Репозиторий пользователя
+//type Repo struct {
+//	Id       int    `json:"id"`
+//	Name     string `json:"name"`
+//	FullName string `json:"full_name"`
+//	Owner    string `json:"owner.login"`
+//}
+//
+//// Web hook
+//type Hook struct {
+//	Id int `json:"id"`
 
-	//var response interface{}
+//// Подгружает список репозиториев
+//func GetRepos() (repos []Repo) {
+//	params := make(map[string]string)
+//	params["affiliation"] = "owner"
+//
+//	response, err := get(apiHost + "/user/repos", params)
+//	if err != nil {
+//		return
+//	}
+//
+//	err = json.Unmarshal(response, &repos)
+//	if err != nil {
+//		log.Fatal("Can't parse user repos from response. ", err, response)
+//		return
+//	}
+//
+//	return
+//}
 
-	//err := json.Unmarshal(result, &response)
-	//if err != nil {
-	//	return
-	//}
+//// Подписываемся на события репозитория
+//func CreatePushHook(owner string, repo string) (hook Hook) {
+//	url := fmt.Sprintf("%v/repos/%v/%v/hooks", apiHost, owner, repo)
+//
+//	response, err := post(url, []byte(`{
+//		"name": "web",
+//		"active": true,
+//		"events": [
+//			"push",
+//		],
+//		"config": {
+//			"url": "https://localhost:8090/hook/` + owner + `/` + repo + `",
+//			"content_type": "json",
+//			"insecure_ssl": "0"
+//		}
+//	}`))
+//	if err != nil {
+//		return
+//	}
+//
+//	err = json.Unmarshal(response, &hook)
+//	if err != nil {
+//		log.Fatal("Can't parse hook response. ", err, response)
+//		return
+//	}
+//
+//	return
+//}
 
-	//fmt.Printf("%+v", string(result));
-}
-
-// Выполняет пост запрос
-func post(url string, query []byte) (response []byte, err error) {
+// Выполняет POST запрос
+func post(url string, query []byte, token string) (response []byte, err error) {
 	// Generate request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(query))
 	if err != nil {
-		log.Fatal("Error request reading.", err)
+		log.Fatal("Error POST request reading. ", err)
 		return
 	}
+
+	return send(req, token)
+}
+
+// Выполняет GET запрос
+func get(baseUrl string, params map[string]string, token string) (response []byte, err error) {
+	link, _ := url.Parse(baseUrl)
+	query, _ := url.ParseQuery(link.RawQuery)
+
+	for key, value := range params {
+		query.Add(key, value)
+	}
+
+	link.RawQuery = query.Encode()
+
+	// Generate request
+	req, err := http.NewRequest("GET", link.String(), bytes.NewBuffer([]byte(``)))
+	if err != nil {
+		log.Fatal("Error GET request reading. ", err)
+		return
+	}
+
+	return send(req, token)
+}
+
+// Выполняет отправку запроса и обработку ответа
+func send(req *http.Request, token string) (response []byte, err error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+
+	if "" != token {
+		req.Header.Add("Authorization", "Bearer "+token)
+	}
 
 	client := &http.Client{Timeout: time.Second * 10}
 

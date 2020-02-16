@@ -1,48 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Bicycle-CI</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-</head>
-    <body>
-    <br>
+{{define "content"}}
     <div class="container text-center">
+        <h1 class="display-5">Choose VSC provider</h1>
+        {{if .Content.Message}}
+            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+        {{end}}
         <div class="row">
-            <div class="col col-md-4">
-                <div class="card" style="width: 18rem;">
-                    <img src="https://apptractor.ru/wp-content/uploads/2019/05/github-octocat.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">GitHub {{ .Token }}</h5>
-                        <a href="{{ .GithubAuthLink }}" class="btn btn-outline-success">Подключить аккаунт</a>
+            {{ range $key, $provider := .Content.Providers }}
+                <div class="col col-md-4">
+                    <div class="card" style="width: 18rem;">
+                        <img src="{{ $provider.GetImageUrl }}" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ $provider.GetTitle }}</h5>
+                            <a href="{{ $provider.GetAuthLink }}" class="btn btn-outline-success">Connect account</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="col col-md-4">
-                <div class="card" style="width: 18rem;">
-                    <img src="https://apptractor.ru/wp-content/uploads/2019/05/github-octocat.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">GitHub</h5>
-                        <a href="{{ .GithubAuthLink }}" class="btn btn-outline-success">Подключить аккаунт</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col col-md-4">
-                <div class="card" style="width: 18rem;">
-                    <img src="https://apptractor.ru/wp-content/uploads/2019/05/github-octocat.png" class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">GitHub</h5>
-                        <a href="{{ .GithubAuthLink }}" class="btn btn-outline-success">Подключить аккаунт</a>
-                    </div>
-                </div>
-            </div>
+            {{ end }}
         </div>
     </div>
-    </body>
-</html>
+{{end}}

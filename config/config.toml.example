@@ -1,9 +1,13 @@
 url = ""
 
-[[Users]]
-login = ""
-password = "" #sha256
+[db]
+user=""
+pass=""
+name=""
 
 [github]
 clientId = ""
-ClientSecret = ""
+clientSecret = ""
+oAuthHost = "https://github.com"
+apiHost = "https://api.github.com"
+image = "https://apptractor.ru/wp-content/uploads/2019/05/github-octocat.png"

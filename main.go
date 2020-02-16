@@ -2,7 +2,7 @@ package main
 
 import (
 	"bicycle-ci/actions"
-	"bicycle-ci/auth"
+	"bicycle-ci/database"
 	"bicycle-ci/providers/github"
 	"github.com/BurntSushi/toml"
 	"io"
@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	Url    string
-	Users  []auth.User
+	Db     database.Config
 	Github github.Config
 }
 
@@ -24,8 +24,8 @@ func init() {
 func main() {
 	cfg := loadConfig()
 
+	database.SetConfig(cfg.Db)
 	github.SetConfig(cfg.Github)
-	auth.SetUsers(cfg.Users)
 
 	startServer(cfg)
 }
@@ -54,6 +54,7 @@ func loadConfig() Config {
 // Подготовка, настройка и запуск сервера
 func startServer(cfg Config) {
 	actions.IndexRoutes()
+	actions.ProjectRoutes()
 	actions.ProviderRoutes()
 
 	http.ListenAndServe(":8090", nil)

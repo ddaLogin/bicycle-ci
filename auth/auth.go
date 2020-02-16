@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"crypto/rand"
+	"bicycle-ci/models"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -13,76 +13,68 @@ import (
 	"time"
 )
 
-// Пользователь
-type User struct {
-	Login    string
-	Password string
-	Salt     string
-	Secret   string
-}
-
 // JWT токен авторизации
-type AuthToken struct {
-	Secret string
+type Token struct {
+	userId string
 	jwt.StandardClaims
 }
 
-// База пользователей
-var users = make(map[interface{}]User)
-
 // Сессия
+var sessionName = "bicycle-session"
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 
-// Загрузка пользователей в память
-func SetUsers(usersArray []User) {
-	for _, user := range usersArray {
-		user.Salt = saltGenerate()
-		user.Secret = saltGenerate()
-		users[user.Login] = user
-	}
+// Middleware авторизации
+func RequireAuthentication(next func(w http.ResponseWriter, req *http.Request, user models.User)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		user := GetCurrentUser(req)
+
+		if (models.User{}) == user {
+			http.Redirect(w, req, "/login", http.StatusSeeOther)
+			return
+		}
+
+		next(w, req, user)
+	})
 }
 
 // Авторизация пользователя
 func Auth(w http.ResponseWriter, req *http.Request) (result bool, err error) {
 	login := req.FormValue("login")
-	password := req.FormValue("password")
+	password := hashPassword(req.FormValue("password"))
+	user := models.GetUserByLoginAndPassword(login, password)
 
-	if user, ok := users[login]; ok {
-		if checkPassword(user.Password, password) {
+	if (models.User{}) != user {
+		session, err := store.Get(req, sessionName)
+		session.Values["id"] = user.Id
+		session.Values["token"] = generateToken(user)
 
-			session, err := store.Get(req, "session-name")
-			session.Values["login"] = user.Login
-			session.Values["token"] = generateAuthToken(user.Salt, user.Secret)
-
-			// Save it before we write to the response/return from the handler.
-			err = session.Save(req, w)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-
-				return result, err
-			}
-
-			result = true
+		// Save it before we write to the response/return from the handler.
+		err = session.Save(req, w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return result, err
 		}
+
+		result = true
 	}
 
 	return
 }
 
 // Получить авторизованного пользователя
-func GetCurrentUser(req *http.Request) (currentUser User) {
-	session, err := store.Get(req, "session-name")
+func GetCurrentUser(req *http.Request) (currentUser models.User) {
+	session, err := store.Get(req, sessionName)
 	if err != nil {
-		log.Println("Can't check auth.", err)
-
+		log.Println("Can't check auth. ", err)
 		return
 	}
 
-	login := session.Values["login"]
+	id := session.Values["id"]
 	token := session.Values["token"]
+	user := models.GetUserById(fmt.Sprintf("%v", id))
 
-	if user, ok := users[login]; ok {
-		if checkAuthToken(user.Salt, fmt.Sprintf("%v", token), user.Secret) {
+	if (models.User{}) != user {
+		if isValidToken(user, fmt.Sprintf("%v", token)) {
 			currentUser = user
 		}
 	}
@@ -90,33 +82,18 @@ func GetCurrentUser(req *http.Request) (currentUser User) {
 	return
 }
 
-// Проверка пароля
-func checkPassword(password string, inputPassword string) bool {
-	hasher := sha256.New()
-	hasher.Write([]byte(inputPassword))
-
-	return password == hex.EncodeToString(hasher.Sum(nil))
-}
-
-// Генерация соли для токена
-func saltGenerate() string {
-	b := make([]byte, 20)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
-}
-
 // Генерация токена авторизации
-func generateAuthToken(salt string, secret string) (authToken string) {
-	expirationTime := time.Now().Add(5 * time.Minute)
-	auth := &AuthToken{
-		Secret: secret,
+func generateToken(user models.User) (authToken string) {
+	expirationTime := time.Now().Add(120 * time.Minute)
+	token := &Token{
+		userId: fmt.Sprintf("%v", user.Id),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, auth)
-	authToken, err := token.SignedString([]byte(salt))
+	tkn := jwt.NewWithClaims(jwt.SigningMethodHS256, token)
+	authToken, err := tkn.SignedString([]byte(user.Salt))
 
 	if err != nil {
 		log.Println("Can't generate new auth token", err)
@@ -127,15 +104,23 @@ func generateAuthToken(salt string, secret string) (authToken string) {
 }
 
 // Проверка токена авторизации
-func checkAuthToken(salt string, token string, secret string) bool {
-	auth := &AuthToken{}
+func isValidToken(user models.User, jwtToken string) bool {
+	token := &Token{}
 
-	tkn, err := jwt.ParseWithClaims(token, auth, func(token *jwt.Token) (interface{}, error) {
-		return []byte(salt), nil
+	tkn, err := jwt.ParseWithClaims(jwtToken, token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(user.Salt), nil
 	})
 	if err != nil {
 		return false
 	}
 
-	return tkn.Valid && auth.Secret == secret
+	return tkn.Valid
+}
+
+// Хеширование пароля
+func hashPassword(inputPassword string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(inputPassword))
+
+	return hex.EncodeToString(hasher.Sum(nil))
 }

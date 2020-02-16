@@ -1,36 +1,69 @@
 package actions
 
 import (
-	"bicycle-ci/providers/github"
-	"html/template"
+	"bicycle-ci/auth"
+	"bicycle-ci/models"
+	"bicycle-ci/providers"
+	"bicycle-ci/templates"
 	"net/http"
+	"strconv"
 )
 
-type listPage struct {
-	GithubAuthLink string
-	Token          string
+// Страница списка доступных провайдеров
+type ProvidersListPage struct {
+	Providers []providers.ProviderInterface
+	Message   string
 }
 
-var token github.AccessToken
+//type ReposPage struct {
+//	Repos []github.Repo
+//}
 
+// Регистрация роутов по провайдерам
 func ProviderRoutes() {
-	http.HandleFunc("/providers/list", list)
-	http.HandleFunc("/providers/github/callback", gitHubCallback)
+	http.Handle("/providers/list", auth.RequireAuthentication(providersList))
+	http.Handle("/providers/callback", auth.RequireAuthentication(oAuthCallback))
+
+	//http.Handle("/providers/github/repos", auth.RequireAuthentication(gitHubRepos))
 }
 
 // Страница провайдеров
-func list(w http.ResponseWriter, req *http.Request) {
-	view, _ := template.ParseFiles("templates/providers/list.html")
-
-	view.Execute(w, listPage{
-		GithubAuthLink: github.GetOAuthLink(),
-		Token:          token.Token,
-	})
+func providersList(w http.ResponseWriter, req *http.Request, user models.User) {
+	message := req.URL.Query().Get("message")
+	templates.Render(w, "templates/providers/list.html", ProvidersListPage{
+		Providers: providers.GetAvailableProviders(),
+		Message:   message,
+	}, user)
 }
 
-// Callback роут после авторизации на гитхабе
-func gitHubCallback(w http.ResponseWriter, req *http.Request) {
-	code := req.URL.Query().Get("code")
+// Callback роут после oauth авторизации у провайдера
+func oAuthCallback(w http.ResponseWriter, req *http.Request, user models.User) {
+	providerType, _ := strconv.Atoi(req.URL.Query().Get("providerType"))
+	provider := providers.GetProviderByType(providerType)
 
-	token = github.GetAccessToken(code)
+	if provider == nil {
+		http.Redirect(w, req, "/providers/list?message=Unknown provider", http.StatusSeeOther)
+		return
+	}
+
+	providerToken := provider.OAuthCallback(req)
+
+	if "" == providerToken {
+		http.Redirect(w, req, "/providers/list?message=Failed to login, try again", http.StatusSeeOther)
+		return
+	}
+
+	providerModel := models.ProviderData{UserId: user.Id, ProviderType: providerType, ProviderAuthToken: providerToken}
+	provider.GetProviderData(&providerModel)
+
+	providerModel.Save()
+
+	http.Redirect(w, req, "/providers/repos?providerType="+req.URL.Query().Get("providerType"), http.StatusSeeOther)
 }
+
+//// Страница репозиториев с гитхаба
+//func gitHubRepos(w http.ResponseWriter, req *http.Request, user models.User) {
+//	templates.Render(w, "templates/providers/repos.html", ReposPage{
+//		Repos: github.GetRepos(),
+//	}, user)
+//}

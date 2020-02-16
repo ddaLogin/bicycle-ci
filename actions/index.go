@@ -2,37 +2,28 @@ package actions
 
 import (
 	"bicycle-ci/auth"
+	"bicycle-ci/models"
 	"bicycle-ci/templates"
-
 	"net/http"
 )
 
-type IndexPage struct {
-	Base    templates.BaseData
-	Message string
-}
+// Главная страница
+type IndexPage struct{}
 
+// Страница авторизации
 type LoginPage struct {
-	Base    templates.BaseData
 	Message string
 }
 
+// Регистрация основных роутов
 func IndexRoutes() {
-	http.HandleFunc("/", index)
+	http.Handle("/", auth.RequireAuthentication(index))
 	http.HandleFunc("/login", login)
 }
 
 // Главная страница
-func index(w http.ResponseWriter, req *http.Request) {
-	user := auth.GetCurrentUser(req)
-	if (auth.User{}) == user {
-		http.Redirect(w, req, "/login", http.StatusSeeOther)
-		return
-	}
-
-	templates.Render(w, "templates/index.html", IndexPage{
-		Base: templates.BaseData{User: user},
-	})
+func index(w http.ResponseWriter, req *http.Request, user models.User) {
+	templates.Render(w, "templates/index.html", IndexPage{}, user)
 }
 
 // Страница авторизации
@@ -50,5 +41,5 @@ func login(w http.ResponseWriter, req *http.Request) {
 		data.Message = "Wrong login or password"
 	}
 
-	templates.Render(w, "templates/login.html", data)
+	templates.Render(w, "templates/login.html", data, models.User{})
 }

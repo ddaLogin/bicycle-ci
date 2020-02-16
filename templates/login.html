@@ -14,8 +14,8 @@
                 <button type="submit" class="btn btn-outline-primary col-sm-12">Sign in</button>
             </form>
             <br>
-            {{if .Message}}
-                <div class="alert alert-danger" role="alert">{{ .Message }}</div>
+            {{if .Content.Message}}
+                <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
             {{end}}
         </div>
     </div>
