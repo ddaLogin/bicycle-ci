@@ -18,11 +18,18 @@ type ProjectEnablePage struct {
 	ProjectsToEnable map[int]models.Project
 }
 
+// Страница редактирования плана
+type ProjectPlanPage struct {
+	Project models.Project
+	Message string
+}
+
 // Регистрация роутов по проектам
 func ProjectRoutes() {
 	http.Handle("/projects/list", auth.RequireAuthentication(projectsList))
 	http.Handle("/projects/choose", auth.RequireAuthentication(projectsChoose))
 	http.Handle("/projects/enable", auth.RequireAuthentication(projectsEnable))
+	http.Handle("/projects/plan", auth.RequireAuthentication(projectsPlan))
 }
 
 // Страница проектов пользователя
@@ -86,4 +93,32 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 	project.Save()
 
 	http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+}
+
+// Редактирование плана сборки
+func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
+	projectId := req.URL.Query().Get("projectId")
+	project := models.GetProjectById(projectId)
+	message := ""
+
+	if (models.Project{}) == project && project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	if http.MethodPost == req.Method {
+		plan := req.FormValue("plan")
+		project.Plan = &plan
+
+		if project.Save() {
+			http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+		} else {
+			message = "Can't save build plan. Please try again"
+		}
+	}
+
+	templates.Render(w, "templates/projects/plan.html", ProjectPlanPage{
+		Project: project,
+		Message: message,
+	}, user)
 }

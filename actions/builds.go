@@ -3,11 +3,15 @@ package actions
 import (
 	"bicycle-ci/auth"
 	"bicycle-ci/models"
-	"fmt"
-	"log"
+	"bicycle-ci/templates"
 	"net/http"
 	"os/exec"
 )
+
+// Шаблон страницы выполнения билда
+type RunPage struct {
+	Output string
+}
 
 // Регистрация роутов для сборок
 func BuildsRoutes() {
@@ -16,39 +20,15 @@ func BuildsRoutes() {
 
 // Запуск сборки
 func run(w http.ResponseWriter, req *http.Request, user models.User) {
-	//projectId := req.URL.Query().Get("projectId")
-	//project   := models.GetProjectById(projectId)
+	projectId := req.URL.Query().Get("projectId")
+	project := models.GetProjectById(projectId)
+	page := RunPage{}
 
-	//url := "https://github.com/ddaLogin/testHook.git"
-
-	//cmd := exec.Command("bash", "-c", "git clone https://github.com/ddaLogin/testHook.git")
-	//stdout, err := cmd.StdoutPipe()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//if err := cmd.Start(); err != nil {
-	//	log.Fatal(err)
-	//}
-	//out, _ := ioutil.ReadAll(stdout)
-	//fmt.Printf("%+v", string(out))
-
-	cmd := exec.Command("bash", "-c", "git clone https://github.com/ddaLogin/testHook.git")
-	stdout, err := cmd.StdoutPipe()
+	cmd := exec.Command("sh", "-c", *project.Plan)
+	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		page.Output = err.Error()
 	}
-	cmd.Start()
-
-	buf := make([]byte, 80)
-	for {
-		n, err := stdout.Read(buf)
-		if n > 0 {
-			fmt.Println(buf[0:n])
-		}
-		if err != nil {
-			break
-		}
-	}
-
-	cmd.Wait()
+	page.Output = string(stdoutStderr)
+	templates.Render(w, "templates/Run.html", page, user)
 }

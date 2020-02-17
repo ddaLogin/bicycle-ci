@@ -20,6 +20,7 @@ type Project struct {
 	RepoOwnerName *string // Логин владельца репозитория
 	RepoOwnerId   *string // Идентификатор владельца репозитория
 	Status        int     // Статус проекта
+	Plan          *string // Build plan проекта
 }
 
 // Сохранить проект
@@ -28,8 +29,8 @@ func (pr Project) Save() bool {
 	defer db.Close()
 
 	if pr.Id == 0 {
-		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, status) values (?, ?, ?, ?, ?, ?, ?, ?)",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.Status)
+		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, status, plan) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.Status, pr.Plan)
 		if err != nil {
 			log.Println("Can't insert Project. ", err, pr)
 			return false
@@ -39,8 +40,8 @@ func (pr Project) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, status = ? WHERE id = ?",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.Status, pr.Id)
+		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, status = ?, plan = ? WHERE id = ?",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.Status, pr.Plan, pr.Id)
 		if err != nil {
 			log.Println("Can't update Project. ", err, pr)
 			return false
@@ -75,6 +76,7 @@ func GetProjectsByUserId(userId int) (projects []Project) {
 			&project.RepoOwnerName,
 			&project.RepoOwnerId,
 			&project.Status,
+			&project.Plan,
 		)
 		if err != nil {
 			log.Println("Can't scan projects by user id. ", err)
@@ -109,6 +111,7 @@ func GetProjectById(id string) (project Project) {
 			&project.RepoOwnerName,
 			&project.RepoOwnerId,
 			&project.Status,
+			&project.Plan,
 		)
 		if err != nil {
 			log.Println("Can't scan project by id. ", err)

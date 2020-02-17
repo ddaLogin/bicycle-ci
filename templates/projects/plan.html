@@ -1,0 +1,16 @@
+{{define "content"}}
+    <div class="container text-center">
+        <h1 class="display-5">Build plan of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
+        <br>
+        <br>
+        <form action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
+            <div class="form-group">
+                <label for="exampleFormControlTextarea1">Make your own bash plan</label>
+                <textarea name="plan" class="form-control" id="exampleFormControlTextarea1" rows="6">{{ .Content.Project.Plan }}</textarea>
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn btn-outline-success" value="Save plan">
+            </div>
+        </form>
+    </div>
+{{end}}

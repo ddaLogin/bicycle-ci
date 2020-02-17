@@ -30,7 +30,11 @@
                                     Actions
                                 </button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="/builds/run?projectId={{ $project.Id }}">Run Build</a>
+                                    {{ if $project.Plan }}
+                                        <a class="dropdown-item" href="/builds/run?projectId={{ $project.Id }}">Run Build</a>
+                                        <div class="dropdown-divider"></div>
+                                    {{ end }}
+                                    <a class="dropdown-item" href="/projects/plan?projectId={{ $project.Id }}">Configure plan</a>
                                 </div>
                             </div>
                         </td>
