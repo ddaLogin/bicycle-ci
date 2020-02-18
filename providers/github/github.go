@@ -107,9 +107,9 @@ func (gh GitHub) UpdateProviderData(provider *models.ProviderData) {
 }
 
 // Загрузить список репозиториев
-func (gh GitHub) LoadProjects() (projects map[int]models.Project) {
+func (gh GitHub) LoadProjects() (projects map[int]*models.Project) {
 	repos := getRepositories(gh.Data.ProviderAuthToken)
-	projects = make(map[int]models.Project)
+	projects = make(map[int]*models.Project)
 
 	for _, value := range repos {
 		project := models.Project{
@@ -117,12 +117,12 @@ func (gh GitHub) LoadProjects() (projects map[int]models.Project) {
 			Name:          value.FullName,
 			Provider:      gh.Data.Id,
 			RepoId:        value.Id,
-			RepoName:      &value.Name,
-			RepoOwnerName: &value.OwnerLogin,
-			RepoOwnerId:   &value.OwnerId,
+			RepoName:      value.Name,
+			RepoOwnerName: value.OwnerLogin,
+			RepoOwnerId:   value.OwnerId,
 		}
 
-		projects[project.RepoId] = project
+		projects[project.RepoId] = &project
 	}
 
 	return
@@ -136,9 +136,9 @@ func (gh GitHub) LoadProjectByName(name string) (project models.Project) {
 	project.Name = repo.FullName
 	project.Provider = gh.Data.Id
 	project.RepoId = repo.Id
-	project.RepoName = &repo.Name
-	project.RepoOwnerName = &repo.OwnerLogin
-	project.RepoOwnerId = &repo.OwnerId
+	project.RepoName = repo.Name
+	project.RepoOwnerName = repo.OwnerLogin
+	project.RepoOwnerId = repo.OwnerId
 
 	return
 }
@@ -175,7 +175,6 @@ func getAccessToken(code string) (token string) {
 // Подгружает список репозиториев
 func getRepositories(token string) (repos []GitHubRepo) {
 	params := make(map[string]string)
-	params["affiliation"] = "owner"
 
 	response, err := get(config.ApiHost+"/user/repos", params, token)
 	if err != nil {

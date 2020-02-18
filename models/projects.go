@@ -16,9 +16,9 @@ type Project struct {
 	Name          string  // Имя проекта
 	Provider      int64   // Идентификатор провайдера репозитория
 	RepoId        int     // Идентификатор репозитория
-	RepoName      *string // Имя репозитория
-	RepoOwnerName *string // Логин владельца репозитория
-	RepoOwnerId   *string // Идентификатор владельца репозитория
+	RepoName      string  // Имя репозитория
+	RepoOwnerName string  // Логин владельца репозитория
+	RepoOwnerId   string  // Идентификатор владельца репозитория
 	Status        int     // Статус проекта
 	Plan          *string // Build plan проекта
 }

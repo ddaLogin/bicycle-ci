@@ -1,9 +1,38 @@
 {{define "content"}}
     <div class="container">
-        <div>
-            {{ .Content.Output }}
+        <div class="card text-center">
+            <div class="card-header">
+                <h2>Build of {{ .Content.Project.Name }}</h2>
+            </div>
+            <ul class="list-unstyled">
+                <div class="card-body text-left">
+                    {{ range $key, $stepResult := .Content.Output }}
+                        <div class="card">
+                            <div class="card-header text-white {{ if $stepResult.Error }}bg-danger{{ else }} bg-success {{ end }}">Step: {{ $stepResult.Command }}</div>
+                            <div class="card-body bg-dark">
+                                {{if $stepResult.StdOut }}
+                                    <p class="card-text text-info">{{ $stepResult.StdOut }}</p>
+                                {{end}}
+
+                                {{if $stepResult.StdErr }}
+                                    <p class="card-text text-warning">{{ $stepResult.StdErr }}</p>
+                                {{end}}
+
+                                {{if $stepResult.Error }}
+                                    <p class="card-text text-danger">{{ $stepResult.Error.Error }}</p>
+                                {{end}}
+                            </div>
+                        </div>
+                        <br>
+                    {{ end }}
+                </div>
+            </ul>
+            <div class="card-footer text-muted">
+                <a href="/projects/list" class="btn btn-info">It's clear</a>
+            </div>
         </div>
-        <br>
-        <a href="/projects/list" class="btn btn-info">Ok</a>
     </div>
+    <br>
+    <br>
+    <br>
 {{end}}

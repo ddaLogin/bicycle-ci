@@ -17,7 +17,7 @@ type ProviderInterface interface {
 	GetAuthLink() string                                    // Генерация ссылки для OAuth авторизации
 	OAuthCallback(req *http.Request) string                 // Обработка oAuth авторизации
 	UpdateProviderData(provider *models.ProviderData)       // Запрос на основную информацию аккаунта
-	LoadProjects() (projects map[int]models.Project)        // Загрузить список репозиториев
+	LoadProjects() (projects map[int]*models.Project)       // Загрузить список репозиториев
 	LoadProjectByName(name string) (project models.Project) // Загрузить репозиторий
 }
 

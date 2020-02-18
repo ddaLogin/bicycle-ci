@@ -15,7 +15,7 @@ type ProjectListPage struct {
 
 // Страница активации проектов
 type ProjectEnablePage struct {
-	ProjectsToEnable map[int]models.Project
+	ProjectsToEnable map[int]*models.Project
 }
 
 // Страница редактирования плана

@@ -32,7 +32,7 @@ func main() {
 
 // Инициализация логов
 func initLogger() {
-	f, err := os.OpenFile("./errors.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(os.Getenv("LOG_FILE"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Error opening log file: %v", err)
 	}
@@ -44,7 +44,7 @@ func initLogger() {
 // Чтение настроек
 func loadConfig() Config {
 	var config Config
-	if _, err := toml.DecodeFile("config/config.toml", &config); err != nil {
+	if _, err := toml.DecodeFile(os.Getenv("CONFIG_FILE"), &config); err != nil {
 		log.Fatal(err)
 	}
 
