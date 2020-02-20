@@ -1,0 +1,28 @@
+{{define "content"}}
+    <div class="container text-center">
+        <h1 class="display-5">Deploy key of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
+        <br>
+        {{if .Content.Message}}
+            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+        {{end}}
+        <br>
+        <form action="/projects/deploy?projectId={{ .Content.Project.Id }}" method="post">
+            <div class="form-group">
+                <label for="exampleFormControlTextarea1">Typo key title</label>
+                <input type="text" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}"/>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlTextarea1">Set ssh public key</label>
+                <textarea name="public_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlTextarea1">Set ssh private key</label>
+                <textarea name="private_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" name="isNeedGenerated" class="btn btn-outline-success float-right" value="false">Save my key</button>
+                <button type="submit" name="isNeedGenerated" class="btn btn-outline-primary float-left" value="true">Generate key pair and save</button>
+            </div>
+        </form>
+    </div>
+{{end}}

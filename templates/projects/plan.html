@@ -2,6 +2,9 @@
     <div class="container text-center">
         <h1 class="display-5">Build plan of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
         <br>
+        {{if .Content.Message}}
+            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+        {{end}}
         <br>
         <form action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
             <div class="form-group">

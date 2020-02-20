@@ -17,11 +17,7 @@
                         <th scope="row">{{ $project.Id }}</th>
                         <td>{{ $project.Name }}</td>
                         <td>
-                            {{ if $project.Status }}
-                                <span class="badge badge-success">Enabled</span>
-                            {{ else }}
-                                <span class="badge badge-info">Not enabled</span>
-                            {{ end }}
+                            <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
                         </td>
                         <td>
                             <!-- Example single danger button -->
@@ -34,6 +30,7 @@
                                         <a class="dropdown-item" href="/builds/run?projectId={{ $project.Id }}">Run Build</a>
                                         <div class="dropdown-divider"></div>
                                     {{ end }}
+                                    <a class="dropdown-item" href="/projects/deploy?projectId={{ $project.Id }}">Set deploy key</a>
                                     <a class="dropdown-item" href="/projects/plan?projectId={{ $project.Id }}">Configure plan</a>
                                 </div>
                             </div>

@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,8 +30,14 @@ func SetConfig(cfg Config) {
 	config = cfg
 }
 
+// Ответ от GitHub'а
+type GitHubResponse struct {
+	Response []byte
+	Status   int
+}
+
 // Авторизационный АПИ токен
-type accessToken struct {
+type GitHubAccessToken struct {
 	Token     string `json:"access_token"`
 	TokenType string `json:"token_type"`
 	Scope     string `json:"scope"`
@@ -43,11 +51,23 @@ type GitHubUser struct {
 
 // GitHub репозиторий
 type GitHubRepo struct {
-	Id         int    `json:"id"`
-	Name       string `json:"name"`
-	FullName   string `json:"full_name"`
-	OwnerLogin string `json:"owner.login"`
-	OwnerId    string `json:"owner.id"`
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+	Owner    struct {
+		Login string `json:"login"`
+		Id    int    `json:"id"`
+	} `json:"owner"`
+}
+
+// Ключ деплоя на стороне гитхаба
+type GitHubDeployKey struct {
+	Id        int    `json:"id"`
+	Url       string `json:"url"`
+	Title     string `json:"title"`
+	Verified  bool   `json:"verified"`
+	CreatedAt string `json:"created_at"`
+	ReadOnly  bool   `json:"read_only"`
 }
 
 // GitHub провайдер
@@ -96,9 +116,9 @@ func (gh GitHub) UpdateProviderData(provider *models.ProviderData) {
 	}
 
 	user := GitHubUser{}
-	err = json.Unmarshal(response, &user)
+	err = json.Unmarshal(response.Response, &user)
 	if err != nil {
-		log.Fatal("Can't parse GitHub provider data from response. ", err, string(response))
+		log.Fatal("Can't parse GitHub provider data from response. ", err, string(response.Response))
 		return
 	}
 
@@ -118,8 +138,8 @@ func (gh GitHub) LoadProjects() (projects map[int]*models.Project) {
 			Provider:      gh.Data.Id,
 			RepoId:        value.Id,
 			RepoName:      value.Name,
-			RepoOwnerName: value.OwnerLogin,
-			RepoOwnerId:   value.OwnerId,
+			RepoOwnerName: value.Owner.Login,
+			RepoOwnerId:   strconv.Itoa(value.Owner.Id),
 		}
 
 		projects[project.RepoId] = &project
@@ -137,10 +157,37 @@ func (gh GitHub) LoadProjectByName(name string) (project models.Project) {
 	project.Provider = gh.Data.Id
 	project.RepoId = repo.Id
 	project.RepoName = repo.Name
-	project.RepoOwnerName = repo.OwnerLogin
-	project.RepoOwnerId = repo.OwnerId
+	project.RepoOwnerName = repo.Owner.Login
+	project.RepoOwnerId = strconv.Itoa(repo.Owner.Id)
 
 	return
+}
+
+// Загружает на сервер VCS деплой ключ
+func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project models.Project) int {
+	url := fmt.Sprintf("%v/repos/%v/%v/keys", config.ApiHost, project.RepoOwnerName, project.RepoName)
+	body := []byte(`{"title": "` + keyName + `", "key": "` + strings.TrimSpace(key) + `", "read_only": "true"}`)
+
+	response, err := post(url, body, gh.Data.ProviderAuthToken)
+	if err != nil {
+		return 0
+	}
+
+	if 201 != response.Status {
+		log.Println("Error while uploading deploy key. ", response.Status, string(response.Response), string(body))
+
+		return 0
+	}
+
+	deployKey := GitHubDeployKey{}
+
+	err = json.Unmarshal(response.Response, &deployKey)
+	if err != nil {
+		log.Println("Can't parse GitHub deploy key from response. ", err, string(response.Response))
+		return 0
+	}
+
+	return deployKey.Id
 }
 
 // Запрашивает авторизационый токен
@@ -159,11 +206,11 @@ func getAccessToken(code string) (token string) {
 		return
 	}
 
-	accessToken := accessToken{}
+	accessToken := GitHubAccessToken{}
 
-	err = json.Unmarshal(response, &accessToken)
+	err = json.Unmarshal(response.Response, &accessToken)
 	if err != nil {
-		log.Fatal("Can't parse GitHub access token from response. ", err, string(response))
+		log.Fatal("Can't parse GitHub access token from response. ", err, string(response.Response))
 		return
 	}
 
@@ -181,9 +228,9 @@ func getRepositories(token string) (repos []GitHubRepo) {
 		return
 	}
 
-	err = json.Unmarshal(response, &repos)
+	err = json.Unmarshal(response.Response, &repos)
 	if err != nil {
-		log.Fatal("Can't parse user repos from response. ", err, string(response))
+		log.Fatal("Can't parse user repos from response. ", err, string(response.Response))
 		return
 	}
 
@@ -197,9 +244,9 @@ func getRepository(ownerLogin string, repoName string, token string) (repo GitHu
 		return
 	}
 
-	err = json.Unmarshal(response, &repo)
+	err = json.Unmarshal(response.Response, &repo)
 	if err != nil {
-		log.Fatal("Can't parse user one repo from response. ", err, string(response))
+		log.Fatal("Can't parse user one repo from response. ", err, string(response.Response))
 		return
 	}
 
@@ -236,7 +283,7 @@ func getRepository(ownerLogin string, repoName string, token string) (repo GitHu
 //}
 
 // Выполняет POST запрос
-func post(url string, query []byte, token string) (response []byte, err error) {
+func post(url string, query []byte, token string) (response GitHubResponse, err error) {
 	// Generate request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(query))
 	if err != nil {
@@ -248,7 +295,7 @@ func post(url string, query []byte, token string) (response []byte, err error) {
 }
 
 // Выполняет GET запрос
-func get(baseUrl string, params map[string]string, token string) (response []byte, err error) {
+func get(baseUrl string, params map[string]string, token string) (response GitHubResponse, err error) {
 	link, _ := url.Parse(baseUrl)
 	query, _ := url.ParseQuery(link.RawQuery)
 
@@ -269,7 +316,7 @@ func get(baseUrl string, params map[string]string, token string) (response []byt
 }
 
 // Выполняет отправку запроса и обработку ответа
-func send(req *http.Request, token string) (response []byte, err error) {
+func send(req *http.Request, token string) (response GitHubResponse, err error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 
@@ -288,7 +335,8 @@ func send(req *http.Request, token string) (response []byte, err error) {
 	defer resp.Body.Close()
 
 	// Parse response
-	response, err = ioutil.ReadAll(resp.Body)
+	response.Status = resp.StatusCode
+	response.Response, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal("Error body reading. ", err)
 		return

@@ -11,14 +11,15 @@ const GITHUB_TYPE = 1
 
 // Интерфейс VCS провадеров
 type ProviderInterface interface {
-	SetProviderData(providerData models.ProviderData)       // Устанавливает данные провайдера
-	GetTitle() string                                       // Название провайдера
-	GetImageUrl() string                                    // Ссылка на картинку
-	GetAuthLink() string                                    // Генерация ссылки для OAuth авторизации
-	OAuthCallback(req *http.Request) string                 // Обработка oAuth авторизации
-	UpdateProviderData(provider *models.ProviderData)       // Запрос на основную информацию аккаунта
-	LoadProjects() (projects map[int]*models.Project)       // Загрузить список репозиториев
-	LoadProjectByName(name string) (project models.Project) // Загрузить репозиторий
+	SetProviderData(providerData models.ProviderData)                              // Устанавливает данные провайдера
+	GetTitle() string                                                              // Название провайдера
+	GetImageUrl() string                                                           // Ссылка на картинку
+	GetAuthLink() string                                                           // Генерация ссылки для OAuth авторизации
+	OAuthCallback(req *http.Request) string                                        // Обработка oAuth авторизации
+	UpdateProviderData(provider *models.ProviderData)                              // Запрос на основную информацию аккаунта
+	LoadProjects() (projects map[int]*models.Project)                              // Загрузить список репозиториев
+	LoadProjectByName(name string) (project models.Project)                        // Загрузить репозиторий
+	UploadProjectDeployKey(keyName string, key string, project models.Project) int // Загружает на сервер VCS деплой ключ
 }
 
 // Список всех доступных VCS провайдеров

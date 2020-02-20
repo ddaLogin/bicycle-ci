@@ -4,8 +4,10 @@ import (
 	"bicycle-ci/auth"
 	"bicycle-ci/models"
 	"bicycle-ci/providers"
+	"bicycle-ci/ssh"
 	"bicycle-ci/templates"
 	"net/http"
+	"strconv"
 )
 
 // Страница списка проектов
@@ -16,6 +18,12 @@ type ProjectListPage struct {
 // Страница активации проектов
 type ProjectEnablePage struct {
 	ProjectsToEnable map[int]*models.Project
+}
+
+// Страница настройки ключей деплоя
+type ProjectDeployPage struct {
+	Project models.Project
+	Message string
 }
 
 // Страница редактирования плана
@@ -29,6 +37,7 @@ func ProjectRoutes() {
 	http.Handle("/projects/list", auth.RequireAuthentication(projectsList))
 	http.Handle("/projects/choose", auth.RequireAuthentication(projectsChoose))
 	http.Handle("/projects/enable", auth.RequireAuthentication(projectsEnable))
+	http.Handle("/projects/deploy", auth.RequireAuthentication(projectsDeploy))
 	http.Handle("/projects/plan", auth.RequireAuthentication(projectsPlan))
 }
 
@@ -60,7 +69,7 @@ func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) 
 
 	for _, value := range models.GetProjectsByUserId(user.Id) {
 		if val, ok := projectsToEnable[value.RepoId]; ok {
-			val.Status = models.STATUS_ENABLED
+			val.Status = value.Status
 		}
 	}
 
@@ -89,10 +98,66 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 	provider.SetProviderData(providerData)
 	project := provider.LoadProjectByName(repoName)
 
-	project.Status = models.STATUS_ENABLED
+	project.Status = models.STATUS_NOT_DEPLOYABLE
 	project.Save()
 
 	http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+}
+
+// Настройка ключей деплоя
+func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) {
+	projectId := req.URL.Query().Get("projectId")
+	project := models.GetProjectById(projectId)
+	message := ""
+
+	if (models.Project{}) == project && project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	if http.MethodPost == req.Method {
+		isGenerate := req.FormValue("isNeedGenerated")
+		publicKey := req.FormValue("public_key")
+		privateKey := req.FormValue("private_key")
+		titleKey := req.FormValue("title_key")
+		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
+		provider := providers.GetProviderByType(providerData.ProviderType)
+
+		if provider == nil || providerData == (models.ProviderData{}) {
+			http.NotFound(w, req)
+			return
+		}
+
+		provider.SetProviderData(providerData)
+
+		// Автоматически генерируем SSH ключи
+		if "true" == isGenerate {
+			pair := ssh.GenerateKeyPair()
+			publicKey = string(pair.Public)
+			privateKey = string(pair.Private)
+		}
+
+		keyId := provider.UploadProjectDeployKey(titleKey, publicKey, project)
+
+		if 0 != keyId {
+			project.DeployKeyId = &keyId
+			project.DeployPrivate = &privateKey
+			project.Status = models.STATUS_NOT_CONFIGURED
+
+			if project.Save() {
+				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+			} else {
+				message = "Can't save project with deploy key. Please try again"
+			}
+		} else {
+			message = "Can't upload deployment key. Please try again"
+		}
+	}
+
+	templates.Render(w, "templates/projects/deploy.html", ProjectDeployPage{
+		Project: project,
+		Message: message,
+	}, user)
 }
 
 // Редактирование плана сборки

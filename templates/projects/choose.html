@@ -15,11 +15,7 @@
                     <tr>
                         <td>{{ $project.Name }}</td>
                         <td>
-                            {{ if $project.Status }}
-                                <span class="badge badge-success">Enabled</span>
-                            {{ else }}
-                                <span class="badge badge-info">Not enabled</span>
-                            {{ end }}
+                            <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
                         </td>
                         <td>
                             {{ if not $project.Status }}
