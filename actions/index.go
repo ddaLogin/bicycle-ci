@@ -8,7 +8,9 @@ import (
 )
 
 // Главная страница
-type IndexPage struct{}
+type IndexPage struct {
+	Builds []models.Build
+}
 
 // Страница авторизации
 type LoginPage struct {
@@ -23,7 +25,9 @@ func IndexRoutes() {
 
 // Главная страница
 func index(w http.ResponseWriter, req *http.Request, user models.User) {
-	templates.Render(w, "templates/index.html", IndexPage{}, user)
+	templates.Render(w, "templates/index.html", IndexPage{
+		Builds: models.GetBuilds(),
+	}, user)
 }
 
 // Страница авторизации

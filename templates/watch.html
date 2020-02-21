@@ -8,7 +8,7 @@
                 <div class="card-body text-left">
                     {{ range $key, $stepResult := .Content.Output }}
                         <div class="card">
-                            <div class="card-header text-white {{ if $stepResult.Error }}bg-danger{{ else }} bg-success {{ end }}">Step: {{ $stepResult.StepName }}</div>
+                            <div class="card-header text-white {{ if $stepResult.Status }}bg-success{{ else }} bg-danger {{ end }}">Step: {{ $stepResult.Name }}</div>
                             <div class="card-body bg-dark">
                                 {{if $stepResult.StdOut }}
                                     <pre class="card-text text-info">{{ $stepResult.StdOut }}</pre>
@@ -19,7 +19,7 @@
                                 {{end}}
 
                                 {{if $stepResult.Error }}
-                                    <pre class="card-text text-danger">{{ $stepResult.Error.Error }}</pre>
+                                    <pre class="card-text text-danger">{{ $stepResult.Error }}</pre>
                                 {{end}}
                             </div>
                         </div>
@@ -35,4 +35,12 @@
     <br>
     <br>
     <br>
+
+    {{ if (eq .Content.Build.Status 0)}}
+        <script>
+            setTimeout(function() {
+                location.reload();
+            }, 500);
+        </script>
+    {{ end }}
 {{end}}

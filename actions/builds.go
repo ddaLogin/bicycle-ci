@@ -4,95 +4,104 @@ import (
 	"bicycle-ci/auth"
 	"bicycle-ci/models"
 	"bicycle-ci/templates"
-	"bytes"
+	"bicycle-ci/worker"
+	"fmt"
 	"net/http"
 	"os/exec"
 	"strconv"
-	"strings"
+	"time"
 )
 
-// Шаблон страницы выполнения билда
-type RunPage struct {
+// Шаблон страницы билда
+type WatchPage struct {
 	Project models.Project
-	Output  []StepResult
-}
-
-// Результаты запуска шага
-type StepResult struct {
-	StepName string
-	Error    error
-	StdOut   string
-	StdErr   string
+	Output  []models.Step
+	Build   models.Build
 }
 
 // Регистрация роутов для сборок
 func BuildsRoutes() {
 	http.Handle("/builds/run", auth.RequireAuthentication(run))
+	http.Handle("/builds/watch", auth.RequireAuthentication(watch))
 }
 
 // Запуск сборки
 func run(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
-	page := RunPage{
+
+	if (models.Project{}) == project && project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	build := models.Build{
+		ProjectId: project.Id,
+		StartedAt: time.Now().Format("2006-01-02 15:04:05"),
+		Status:    models.STATUS_RUNNING,
+	}
+	build.Save()
+
+	go process(project, build)
+
+	http.Redirect(w, req, "/builds/watch?buildId="+fmt.Sprintf("%v", build.Id), http.StatusSeeOther)
+}
+
+// Страница сборки
+func watch(w http.ResponseWriter, req *http.Request, user models.User) {
+	buildId := req.URL.Query().Get("buildId")
+	build := models.GetBuildById(buildId)
+
+	if (models.Build{}) == build {
+		http.NotFound(w, req)
+		return
+	}
+
+	project := models.GetProjectById(strconv.Itoa(int(build.ProjectId)))
+
+	if (models.Project{}) == project {
+		http.NotFound(w, req)
+		return
+	}
+
+	steps := models.GetStepsByBuildId(build.Id)
+
+	templates.Render(w, "templates/watch.html", WatchPage{
 		Project: project,
-	}
+		Output:  steps,
+		Build:   build,
+	}, user)
+}
 
+// Перенести в воркер
+func process(project models.Project, build models.Build) {
 	// Стандартный шаг с копированием репозитория
-	upload := exec.Command("bash", "./scripts/upload.sh")
-	uploadResult := runStep(project, upload)
-	uploadResult.StepName = "Cloning repository"
-	page.Output = append(page.Output, uploadResult)
+	clone := exec.Command("bash", "./worker/scripts/upload.sh")
+	cloneStep := worker.RunStep(project, clone)
+	cloneStep.Name = "Cloning repository"
+	cloneStep.BuildId = build.Id
+	cloneStep.Save()
 
-	if uploadResult.Error == nil {
+	var buildStep models.Step
+	if cloneStep.Error == "" {
 		//Запускаем сборку
-		build := exec.Command("bash", "./scripts/build.sh")
-		buildResult := runStep(project, build)
-		buildResult.StepName = "Build project"
-		page.Output = append(page.Output, buildResult)
+		buildCmd := exec.Command("bash", "./worker/scripts/build.sh")
+		buildStep = worker.RunStep(project, buildCmd)
+		buildStep.Name = "Build project"
+		buildStep.BuildId = build.Id
+		buildStep.Save()
 	}
 
-	cleanResult := runStep(project, exec.Command("bash", "./scripts/clear.sh"))
-	cleanResult.StepName = "Cleaning up"
-	page.Output = append(page.Output, cleanResult)
+	cleanStep := worker.RunStep(project, exec.Command("bash", "./worker/scripts/clear.sh"))
+	cleanStep.Name = "Cleaning up"
+	cleanStep.BuildId = build.Id
+	cleanStep.Save()
 
-	templates.Render(w, "templates/run.html", page, user)
-}
-
-// Выполнить этап билда
-func runStep(project models.Project, cmd *exec.Cmd) (result StepResult) {
-	var stdout, stderr bytes.Buffer
-	var env []string
-	env = append(env, "ID="+strconv.Itoa(int(project.Id)))
-	env = append(env, "NAME="+project.Name)
-	env = append(env, "PLAN="+strings.TrimSpace(*project.Plan))
-	env = append(env, "SSHKEY="+*project.DeployPrivate)
-
-	cmd.Env = env
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		result.Error = err
+	if cloneStep.Status == models.STEP_STATUS_SUCCESS && buildStep.Status == models.STEP_STATUS_SUCCESS && cleanStep.Status == models.STEP_STATUS_SUCCESS {
+		build.Status = models.STATUS_SUCCESS
+	} else {
+		build.Status = models.STATUS_FAILED
 	}
-	cmd.Wait()
-	result.StdOut = string(stdout.Bytes())
-	result.StdErr = string(stderr.Bytes())
 
-	return
+	build.Save()
 }
-
-//// Выполнение комманды
-//func buildProject(result *StepResult) {
-//	cmd := exec.StepName("bash", "-c", result.StepName)
-//	var stdout, stderr bytes.Buffer
-//	cmd.Stdout = &stdout
-//	cmd.Stderr = &stderr
-//	err := cmd.Run()
-//	if err != nil {
-//		result.Error = err
-//	}
-//	cmd.Wait()
-//	result.StdOut = string(stdout.Bytes())
-//	result.StdErr = string(stderr.Bytes())
-//}
