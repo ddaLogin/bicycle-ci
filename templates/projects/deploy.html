@@ -2,14 +2,14 @@
     <div class="container text-center">
         <h1 class="display-5">Deploy key of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
         <br>
-        {{if .Content.Message}}
+        {{if .Content.Message }}
             <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
         {{end}}
         <br>
         <form action="/projects/deploy?projectId={{ .Content.Project.Id }}" method="post">
             <div class="form-group">
                 <label for="exampleFormControlTextarea1">Typo key title</label>
-                <input type="text" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}"/>
+                <input type="text" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}" required/>
             </div>
             <div class="form-group">
                 <label for="exampleFormControlTextarea1">Set ssh public key</label>

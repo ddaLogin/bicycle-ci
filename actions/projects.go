@@ -68,8 +68,8 @@ func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) 
 	projectsToEnable := provider.LoadProjects()
 
 	for _, value := range models.GetProjectsByUserId(user.Id) {
-		if val, ok := projectsToEnable[value.RepoId]; ok {
-			val.Status = value.Status
+		if _, ok := projectsToEnable[value.RepoId]; ok {
+			projectsToEnable[value.RepoId] = &value
 		}
 	}
 
@@ -98,7 +98,6 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 	provider.SetProviderData(providerData)
 	project := provider.LoadProjectByName(repoName)
 
-	project.Status = models.STATUS_NOT_DEPLOYABLE
 	project.Save()
 
 	http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
@@ -142,7 +141,6 @@ func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) 
 		if 0 != keyId {
 			project.DeployKeyId = &keyId
 			project.DeployPrivate = &privateKey
-			project.Status = models.STATUS_NOT_CONFIGURED
 
 			if project.Save() {
 				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)

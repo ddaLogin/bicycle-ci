@@ -26,13 +26,29 @@ type Project struct {
 	RepoOwnerId   string  // Идентификатор владельца репозитория
 	DeployKeyId   *int    // Идентификатор ключа деплоя
 	DeployPrivate *string // Приватный SSH ключ
-	Status        int     // Статус проекта
 	Plan          *string // Build plan проекта
+}
+
+// Получить статус проекта
+func (pr Project) Status() int {
+	if pr.Id == 0 {
+		return STATUS_NOT_ENABLED
+	}
+
+	if pr.DeployKeyId == nil || *pr.DeployKeyId == 0 || pr.DeployPrivate == nil || *pr.DeployPrivate == "" {
+		return STATUS_NOT_DEPLOYABLE
+	}
+
+	if pr.Plan == nil || *pr.Plan == "" {
+		return STATUS_NOT_CONFIGURED
+	}
+
+	return STATUS_READY
 }
 
 // Хелпер для рендера названия статуса
 func (pr Project) StatusTitle() string {
-	switch pr.Status {
+	switch pr.Status() {
 	case STATUS_NOT_ENABLED:
 		return "Not enabled"
 	case STATUS_NOT_DEPLOYABLE:
@@ -54,7 +70,7 @@ func (pr Project) StatusTitle() string {
 
 // Хелпер для рендера статуса нужным цветом
 func (pr Project) StatusColor() string {
-	switch pr.Status {
+	switch pr.Status() {
 	case STATUS_NOT_ENABLED:
 		return "secondary"
 	case STATUS_NOT_DEPLOYABLE:
@@ -80,8 +96,8 @@ func (pr Project) Save() bool {
 	defer db.Close()
 
 	if pr.Id == 0 {
-		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, deploy_key_id, deploy_private, status, plan) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.Status, pr.Plan)
+		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, deploy_key_id, deploy_private, plan) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.Plan)
 		if err != nil {
 			log.Println("Can't insert Project. ", err, pr)
 			return false
@@ -91,8 +107,8 @@ func (pr Project) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, deploy_key_id = ?, deploy_private = ?, status = ?, plan = ? WHERE id = ?",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.Status, pr.Plan, pr.Id)
+		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, deploy_key_id = ?, deploy_private = ?, plan = ? WHERE id = ?",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.Plan, pr.Id)
 		if err != nil {
 			log.Println("Can't update Project. ", err, pr)
 			return false
@@ -128,7 +144,6 @@ func GetProjectsByUserId(userId int) (projects []Project) {
 			&project.RepoOwnerId,
 			&project.DeployKeyId,
 			&project.DeployPrivate,
-			&project.Status,
 			&project.Plan,
 		)
 		if err != nil {
@@ -165,7 +180,6 @@ func GetProjectById(id string) (project Project) {
 			&project.RepoOwnerId,
 			&project.DeployKeyId,
 			&project.DeployPrivate,
-			&project.Status,
 			&project.Plan,
 		)
 		if err != nil {
