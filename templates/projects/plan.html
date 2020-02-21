@@ -1,19 +1,29 @@
 {{define "content"}}
-    <div class="container text-center">
-        <h1 class="display-5">Build plan of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
-        <br>
+    <div class="container">
+        <h1 class="display-5 text-center">Build plan of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
         {{if .Content.Message}}
             <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
         {{end}}
-        <br>
-        <form action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
-            <div class="form-group">
-                <label for="exampleFormControlTextarea1">Make your own bash plan</label>
-                <textarea name="plan" class="form-control" id="exampleFormControlTextarea1" rows="6">{{ .Content.Project.Plan }}</textarea>
+        <div class="card">
+            <div class="card-header text-white bg-info">Step: Cloning repository</div>
+            <div class="card-body bg-dark">
+                <pre class="card-text text-info">The first step is to automatically clone your project</pre>
             </div>
-            <div class="form-group">
-                <input type="submit" class="btn btn-outline-success" value="Save plan">
+        </div>
+        <div class="card">
+            <div class="card-header text-white bg-primary">Step: Build project</div>
+            <div class="card-body bg-dark">
+                <pre class="card-text text-info">The second step is to build your project</pre>
+                <form action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
+                    <div class="form-group">
+                        <label for="exampleFormControlTextarea1" class="text-white">Make your bash script to build project</label>
+                        <textarea name="plan" class="form-control" id="exampleFormControlTextarea1" rows="10">{{ .Content.Project.Plan }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" class="btn btn-outline-success float-right" value="Save plan">
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 {{end}}

@@ -8,18 +8,18 @@
                 <div class="card-body text-left">
                     {{ range $key, $stepResult := .Content.Output }}
                         <div class="card">
-                            <div class="card-header text-white {{ if $stepResult.Error }}bg-danger{{ else }} bg-success {{ end }}">Step: {{ $stepResult.Command }}</div>
+                            <div class="card-header text-white {{ if $stepResult.Error }}bg-danger{{ else }} bg-success {{ end }}">Step: {{ $stepResult.StepName }}</div>
                             <div class="card-body bg-dark">
                                 {{if $stepResult.StdOut }}
-                                    <p class="card-text text-info">{{ $stepResult.StdOut }}</p>
+                                    <pre class="card-text text-info">{{ $stepResult.StdOut }}</pre>
                                 {{end}}
 
                                 {{if $stepResult.StdErr }}
-                                    <p class="card-text text-warning">{{ $stepResult.StdErr }}</p>
+                                    <pre class="card-text text-warning">{{ $stepResult.StdErr }}</pre>
                                 {{end}}
 
                                 {{if $stepResult.Error }}
-                                    <p class="card-text text-danger">{{ $stepResult.Error.Error }}</p>
+                                    <pre class="card-text text-danger">{{ $stepResult.Error.Error }}</pre>
                                 {{end}}
                             </div>
                         </div>
@@ -28,7 +28,7 @@
                 </div>
             </ul>
             <div class="card-footer text-muted">
-                <a href="/projects/list" class="btn btn-info">It's clear</a>
+{{/*                <a href="/projects/list" class="btn btn-info">Ok</a>*/}}
             </div>
         </div>
     </div>
