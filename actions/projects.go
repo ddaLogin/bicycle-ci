@@ -81,6 +81,7 @@ func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) 
 // Активация проекта на основе репозитория
 func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) {
 	repoName := req.URL.Query().Get("repoName")
+	repoOwner := req.URL.Query().Get("repoOwner")
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
 
 	if (models.ProviderData{}) == providerData && providerData.UserId != user.Id {
@@ -96,7 +97,7 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 	}
 
 	provider.SetProviderData(providerData)
-	project := provider.LoadProjectByName(repoName)
+	project := provider.LoadProjectToEnable(repoOwner, repoName)
 
 	project.Save()
 

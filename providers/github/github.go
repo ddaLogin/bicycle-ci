@@ -149,8 +149,8 @@ func (gh GitHub) LoadProjects() (projects map[int]*models.Project) {
 }
 
 // Загрузить один репозиторий
-func (gh GitHub) LoadProjectByName(name string) (project models.Project) {
-	repo := getRepository(gh.Data.ProviderAccountLogin, name, gh.Data.ProviderAuthToken)
+func (gh GitHub) LoadProjectToEnable(ownerName string, repoName string) (project models.Project) {
+	repo := getRepository(ownerName, repoName, gh.Data.ProviderAuthToken)
 
 	project.UserId = gh.Data.UserId
 	project.Name = repo.FullName

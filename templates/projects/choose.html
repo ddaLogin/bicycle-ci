@@ -19,7 +19,7 @@
                         </td>
                         <td>
                             {{ if not $project.Status }}
-                                <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}" class="btn btn-sm btn-outline-success">Enable</a>
+                                <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}" class="btn btn-sm btn-outline-success">Enable</a>
                             {{ end }}
                         </td>
                     </tr>
