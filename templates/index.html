@@ -1,5 +1,6 @@
 {{define "content"}}
     <div class="container-fluid">
+        <h2>Latest builds</h2>
         <table class="table">
             <thead class="thead-dark">
             <tr>
@@ -13,7 +14,7 @@
             {{ range $key, $build := .Content.Builds }}
                 <tr>
                     <th scope="row">{{ $build.Id }}</th>
-                    <td>Тут будет имя проетка</td>
+                    <td>{{ $build.Project.Name }}</td>
                     <td>
                         <a href="/builds/watch?buildId={{ $build.Id }}">
                             <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>

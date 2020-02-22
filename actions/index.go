@@ -26,7 +26,7 @@ func IndexRoutes() {
 // Главная страница
 func index(w http.ResponseWriter, req *http.Request, user models.User) {
 	templates.Render(w, "templates/index.html", IndexPage{
-		Builds: models.GetBuilds(),
+		Builds: models.GetBuildsWithProjects(),
 	}, user)
 }
 

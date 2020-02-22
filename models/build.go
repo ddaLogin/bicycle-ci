@@ -16,6 +16,7 @@ type Build struct {
 	Status    int
 	StartedAt string
 	EndedAt   *string
+	Project   Project
 }
 
 // Хелпер для рендера названия статуса
@@ -129,6 +130,50 @@ func GetBuilds() (builds []Build) {
 			continue
 		}
 
+		builds = append(builds, build)
+	}
+
+	return
+}
+
+// Получить список всех билдов и проектов
+func GetBuildsWithProjects() (builds []Build) {
+	db := database.Db()
+	defer db.Close()
+	rows, err := db.Query("SELECT builds.*, p.* FROM builds LEFT JOIN projects p on builds.project_id = p.id ORDER BY started_at DESC LIMIT 50")
+	if err != nil {
+		log.Println("Can't get Build with projects like list. ", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		build := Build{}
+		project := Project{}
+		err := rows.Scan(
+			&build.Id,
+			&build.ProjectId,
+			&build.Status,
+			&build.StartedAt,
+			&build.EndedAt,
+			&project.Id,
+			&project.UserId,
+			&project.Name,
+			&project.Provider,
+			&project.RepoId,
+			&project.RepoName,
+			&project.RepoOwnerName,
+			&project.RepoOwnerId,
+			&project.DeployKeyId,
+			&project.DeployPrivate,
+			&project.Plan,
+		)
+		if err != nil {
+			log.Println("Can't scan Build with projects like list. ", err)
+			continue
+		}
+
+		build.Project = project
 		builds = append(builds, build)
 	}
 
