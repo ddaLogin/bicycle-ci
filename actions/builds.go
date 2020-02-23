@@ -76,25 +76,37 @@ func watch(w http.ResponseWriter, req *http.Request, user models.User) {
 // Перенести в воркер
 func process(project models.Project, build models.Build) {
 	// Стандартный шаг с копированием репозитория
+	cloneStep := models.Step{
+		BuildId: build.Id,
+		Name:    "Cloning repository",
+		Status:  models.STEP_STATUS_RUNING,
+	}
+	cloneStep.Save()
 	clone := exec.Command("bash", "./worker/scripts/upload.sh")
-	cloneStep := worker.RunStep(project, clone)
-	cloneStep.Name = "Cloning repository"
-	cloneStep.BuildId = build.Id
+	worker.RunStep(project, clone, &cloneStep)
 	cloneStep.Save()
 
 	var buildStep models.Step
 	if cloneStep.Error == "" {
 		//Запускаем сборку
+		buildStep = models.Step{
+			BuildId: build.Id,
+			Name:    "Build project",
+			Status:  models.STEP_STATUS_RUNING,
+		}
+		buildStep.Save()
 		buildCmd := exec.Command("bash", "./worker/scripts/build.sh")
-		buildStep = worker.RunStep(project, buildCmd)
-		buildStep.Name = "Build project"
-		buildStep.BuildId = build.Id
+		worker.RunStep(project, buildCmd, &buildStep)
 		buildStep.Save()
 	}
 
-	cleanStep := worker.RunStep(project, exec.Command("bash", "./worker/scripts/clear.sh"))
-	cleanStep.Name = "Cleaning up"
-	cleanStep.BuildId = build.Id
+	cleanStep := models.Step{
+		BuildId: build.Id,
+		Name:    "Cleaning up",
+		Status:  models.STEP_STATUS_RUNING,
+	}
+	cleanStep.Save()
+	worker.RunStep(project, exec.Command("bash", "./worker/scripts/clear.sh"), &cleanStep)
 	cleanStep.Save()
 
 	if cloneStep.Status == models.STEP_STATUS_SUCCESS && buildStep.Status == models.STEP_STATUS_SUCCESS && cleanStep.Status == models.STEP_STATUS_SUCCESS {

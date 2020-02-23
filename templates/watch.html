@@ -7,9 +7,16 @@
             <ul class="list-unstyled">
                 <div class="card-body text-left">
                     {{ range $key, $stepResult := .Content.Output }}
-                        <div class="card">
-                            <div class="card-header text-white {{ if $stepResult.Status }}bg-success{{ else }} bg-danger {{ end }}">Step: {{ $stepResult.Name }}</div>
+                        <div class="card {{ if (eq $stepResult.Status 0) }}bg-primary{{ end }} {{ if (eq $stepResult.Status 1) }}bg-danger{{ end }} {{ if (eq $stepResult.Status 2) }}bg-success{{ end }}">
+                            <div class="card-header text-white">
+                                Step: {{ $stepResult.Name }}
+                            </div>
                             <div class="card-body bg-dark">
+                                {{ if (eq $stepResult.Status 0) }}
+
+                                    <pre class="card-text text-info"> In process... </pre>
+                                {{ end }}
+
                                 {{if $stepResult.StdOut }}
                                     <pre class="card-text text-info">{{ $stepResult.StdOut }}</pre>
                                 {{end}}
@@ -28,7 +35,8 @@
                 </div>
             </ul>
             <div class="card-footer text-muted">
-{{/*                <a href="/projects/list" class="btn btn-info">Ok</a>*/}}
+                <a href="/projects/list" class="btn btn-sm btn-primary">Ok</a>
+                <a href="/builds/run?projectId={{ .Content.Project.Id }}" class="btn btn-sm btn-primary {{ if (lt .Content.Project.Status 3) }} disabled {{ end }}">Rerun</a>
             </div>
         </div>
     </div>

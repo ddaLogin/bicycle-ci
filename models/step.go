@@ -5,8 +5,9 @@ import (
 	"log"
 )
 
-const STEP_STATUS_FAILED = 0  // Шаг заверишлся ошибкой
-const STEP_STATUS_SUCCESS = 1 // Шаг прошел успешно
+const STEP_STATUS_RUNING = 0  // Шаг в процессе
+const STEP_STATUS_FAILED = 1  // Шаг заверишлся ошибкой
+const STEP_STATUS_SUCCESS = 2 // Шаг прошел успешно
 
 // Один шаг из сборки
 type Step struct {
@@ -20,7 +21,7 @@ type Step struct {
 }
 
 // Сохранить Шаг
-func (st Step) Save() bool {
+func (st *Step) Save() bool {
 	db := database.Db()
 	defer db.Close()
 

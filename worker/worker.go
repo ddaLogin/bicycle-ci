@@ -9,7 +9,7 @@ import (
 )
 
 // Выполнить этап билда
-func RunStep(project models.Project, cmd *exec.Cmd) (result models.Step) {
+func RunStep(project models.Project, cmd *exec.Cmd, result *models.Step) {
 	var stdout, stderr bytes.Buffer
 	var env []string
 	env = append(env, "ID="+strconv.Itoa(int(project.Id)))
@@ -28,7 +28,10 @@ func RunStep(project models.Project, cmd *exec.Cmd) (result models.Step) {
 	cmd.Wait()
 	result.StdOut = string(stdout.Bytes())
 	result.StdErr = string(stderr.Bytes())
-	result.Status = models.STEP_STATUS_SUCCESS
+
+	if result.Status == models.STEP_STATUS_RUNING {
+		result.Status = models.STEP_STATUS_SUCCESS
+	}
 
 	return
 }
