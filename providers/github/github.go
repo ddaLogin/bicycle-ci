@@ -1,10 +1,10 @@
 package github
 
 import (
-	"bicycle-ci/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ddalogin/bicycle-ci/models"
 	"io/ioutil"
 	"log"
 	"net/http"

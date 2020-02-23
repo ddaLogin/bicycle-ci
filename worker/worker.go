@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"bicycle-ci/models"
 	"bytes"
+	"github.com/ddalogin/bicycle-ci/models"
 	"os/exec"
 	"strconv"
 	"strings"

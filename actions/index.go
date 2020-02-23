@@ -1,9 +1,9 @@
 package actions
 
 import (
-	"bicycle-ci/auth"
-	"bicycle-ci/models"
-	"bicycle-ci/templates"
+	"github.com/ddalogin/bicycle-ci/auth"
+	"github.com/ddalogin/bicycle-ci/models"
+	"github.com/ddalogin/bicycle-ci/templates"
 	"net/http"
 )
 

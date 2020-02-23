@@ -1,7 +1,7 @@
 package models
 
 import (
-	"bicycle-ci/database"
+	"github.com/ddalogin/bicycle-ci/database"
 	"log"
 )
 

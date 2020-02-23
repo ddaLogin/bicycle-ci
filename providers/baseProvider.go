@@ -1,8 +1,8 @@
 package providers
 
 import (
-	"bicycle-ci/models"
-	"bicycle-ci/providers/github"
+	"github.com/ddalogin/bicycle-ci/models"
+	"github.com/ddalogin/bicycle-ci/providers/github"
 	"net/http"
 )
 

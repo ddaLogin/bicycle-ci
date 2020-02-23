@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"bicycle-ci/auth"
-	"bicycle-ci/models"
-	"bicycle-ci/templates"
-	"bicycle-ci/worker"
 	"fmt"
+	"github.com/ddalogin/bicycle-ci/auth"
+	"github.com/ddalogin/bicycle-ci/models"
+	"github.com/ddalogin/bicycle-ci/templates"
+	"github.com/ddalogin/bicycle-ci/worker"
 	"net/http"
 	"os/exec"
 	"strconv"

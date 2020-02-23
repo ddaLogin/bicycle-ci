@@ -1,7 +1,7 @@
 package templates
 
 import (
-	"bicycle-ci/models"
+	"github.com/ddalogin/bicycle-ci/models"
 	"html/template"
 	"net/http"
 )

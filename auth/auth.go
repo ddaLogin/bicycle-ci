@@ -1,15 +1,14 @@
 package auth
 
 import (
-	"bicycle-ci/models"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type Token struct {
 
 // Сессия
 var sessionName = "bicycle-session"
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+var store = sessions.NewCookieStore([]byte("QWDqwdiqwdoqid12d1dqwd"))
 
 // Middleware авторизации
 func RequireAuthentication(next func(w http.ResponseWriter, req *http.Request, user models.User)) http.Handler {
