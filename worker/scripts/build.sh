@@ -1,7 +1,8 @@
 printf "Go to the project directory\n";
-cd builds/project-$ID;
+cd /app;
 printf "Starting build...\n";
-bash <<< "$PLAN"
+echo $1 > instruction.sh;
+sh instruction.sh;
 if [ $? -eq 0 ]; then
     printf "Build was successful\n";
 else

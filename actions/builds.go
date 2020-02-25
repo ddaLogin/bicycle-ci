@@ -95,10 +95,20 @@ func process(project models.Project, build models.Build) {
 			Status:  models.STEP_STATUS_RUNING,
 		}
 		buildStep.Save()
-		buildCmd := exec.Command("bash", "./worker/scripts/build.sh")
+
+		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v /home/danil/GoLandProjects/bicycle-ci/builds/project-12:/app node-bci sh /build.sh '"+*project.Plan+"'")
 		worker.RunStep(project, buildCmd, &buildStep)
 		buildStep.Save()
 	}
+
+	deployStep := models.Step{
+		BuildId: build.Id,
+		Name:    "Deploy",
+		Status:  models.STEP_STATUS_RUNING,
+	}
+	deployStep.Save()
+	worker.RunStep(project, exec.Command("bash", "-c", "cp -a builds/project-12/dist/* /var/www/letmeprint/dist"), &deployStep)
+	deployStep.Save()
 
 	cleanStep := models.Step{
 		BuildId: build.Id,
