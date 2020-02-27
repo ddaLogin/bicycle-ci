@@ -7,7 +7,9 @@ import (
 	"github.com/ddalogin/bicycle-ci/templates"
 	"github.com/ddalogin/bicycle-ci/worker"
 	"net/http"
+	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -75,6 +77,8 @@ func watch(w http.ResponseWriter, req *http.Request, user models.User) {
 
 // Перенести в воркер
 func process(project models.Project, build models.Build) {
+	dir, _ := os.Getwd()
+
 	// Стандартный шаг с копированием репозитория
 	cloneStep := models.Step{
 		BuildId: build.Id,
@@ -95,19 +99,20 @@ func process(project models.Project, build models.Build) {
 			Status:  models.STEP_STATUS_RUNING,
 		}
 		buildStep.Save()
-
-		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v /home/danil/GoLandProjects/bicycle-ci/builds/project-12:/app node-bci sh /build.sh '"+*project.Plan+"'")
+		reg := regexp.MustCompile("\r\n")
+		plan := reg.ReplaceAllString(*project.BuildPlan, " ")
+		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v "+dir+"/builds/project-"+strconv.Itoa(int(project.Id))+":/app node-bci sh /build.sh '"+plan+"'")
 		worker.RunStep(project, buildCmd, &buildStep)
 		buildStep.Save()
 	}
 
 	deployStep := models.Step{
 		BuildId: build.Id,
-		Name:    "Deploy",
+		Name:    "Deploy project",
 		Status:  models.STEP_STATUS_RUNING,
 	}
 	deployStep.Save()
-	worker.RunStep(project, exec.Command("bash", "-c", "cp -a builds/project-12/dist/* /var/www/letmeprint/dist"), &deployStep)
+	worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
 	deployStep.Save()
 
 	cleanStep := models.Step{

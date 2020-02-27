@@ -7,6 +7,7 @@ import (
 	"github.com/ddalogin/bicycle-ci/ssh"
 	"github.com/ddalogin/bicycle-ci/templates"
 	"net/http"
+	"regexp"
 	"strconv"
 )
 
@@ -172,12 +173,22 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 
 	if http.MethodPost == req.Method {
 		plan := req.FormValue("plan")
-		project.Plan = &plan
+		deployDir := req.FormValue("deploy_dir")
+		artifactDir := req.FormValue("artifact_dir")
 
-		if project.Save() {
-			http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+		reg := regexp.MustCompile("[^/A-z]+")
+		if !reg.MatchString(deployDir) && (!reg.MatchString(artifactDir) || artifactDir == "") {
+			project.BuildPlan = &plan
+			project.DeployDir = &deployDir
+			project.ArtifactDir = &artifactDir
+
+			if project.Save() {
+				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+			} else {
+				message = "Can't save build plan. Please try again"
+			}
 		} else {
-			message = "Can't save build plan. Please try again"
+			message = "Deploy and Artifact dir must be a correct absolute path"
 		}
 	}
 

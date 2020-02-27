@@ -14,7 +14,8 @@ func RunStep(project models.Project, cmd *exec.Cmd, result *models.Step) {
 	var env []string
 	env = append(env, "ID="+strconv.Itoa(int(project.Id)))
 	env = append(env, "NAME="+project.Name)
-	env = append(env, "PLAN="+strings.TrimSpace(*project.Plan))
+	env = append(env, "DEPLOY_DIR="+strings.TrimSpace(*project.DeployDir))
+	env = append(env, "ARTIFACT_DIR="+strings.TrimSpace(*project.ArtifactDir))
 	env = append(env, "SSHKEY="+*project.DeployPrivate)
 
 	cmd.Env = env
