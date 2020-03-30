@@ -55,6 +55,7 @@ func loadConfig() Config {
 func startServer(cfg Config) {
 	actions.IndexRoutes()
 	actions.ProjectRoutes()
+	actions.HookRoutes()
 	actions.ProviderRoutes()
 	actions.BuildsRoutes()
 

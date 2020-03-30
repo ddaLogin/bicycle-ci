@@ -1,0 +1,24 @@
+{{define "content"}}
+    <div class="container">
+        <h4 class="display-5 text-center">Web Hook settings for &laquo;{{ .Content.Project.Name }}&raquo;</h4>
+        {{if .Content.Message}}
+            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+        {{end}}
+        <br>
+        <div class="col col-sm-6 offset-sm-3">
+            <form action="/hooks/create?projectId={{ .Content.Project.Id }}" method="post">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="branch" name="branch" placeholder="Branch name" required>
+                </div>
+                <div class="row">
+                    <div class="col col-sm-5">
+                        <button type="submit" name="delete" value="true" class="btn btn-outline-danger col-sm-12">Delete push web hook</button>
+                    </div>
+                    <div class="col col-sm-7">
+                        <button type="submit" name="delete" value="false" class="btn btn-outline-success col-sm-12">Save push web hook</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{{end}}

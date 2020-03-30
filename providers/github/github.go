@@ -70,6 +70,14 @@ type GitHubDeployKey struct {
 	ReadOnly  bool   `json:"read_only"`
 }
 
+// GitHub WebHook
+type GitHubWebHook struct {
+	Id     int `json:"id"`
+	Config struct {
+		Url string `json:"url"`
+	} `json:"config"`
+}
+
 // GitHub провайдер
 type GitHub struct {
 	Data models.ProviderData
@@ -190,6 +198,34 @@ func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project mode
 	return deployKey.Id
 }
 
+// Создает Web Hook в репозитории
+func (gh GitHub) CreateWebHook(webHook models.WebHook, project models.Project) string {
+	url := fmt.Sprintf("%v/repos/%v/%v/hooks", config.ApiHost, project.RepoOwnerName, project.RepoName)
+	config := `{"content_type": "json", "insecure_ssl": "1", "url": "` + webHook.GetTriggerUrl() + `"}`
+	body := []byte(`{"config": ` + config + ` , "events": ["` + strings.TrimSpace(webHook.Event) + `"]}`)
+
+	response, err := post(url, body, gh.Data.ProviderAuthToken)
+	if err != nil {
+		return "0"
+	}
+
+	if 201 != response.Status {
+		log.Println("Error while create web hook. ", response.Status, string(response.Response), string(body))
+
+		return "0"
+	}
+
+	gitWebHook := GitHubWebHook{}
+
+	err = json.Unmarshal(response.Response, &gitWebHook)
+	if err != nil {
+		log.Println("Can't parse GitHub web hook from response. ", err, string(response.Response))
+		return "0"
+	}
+
+	return strconv.Itoa(gitWebHook.Id)
+}
+
 // Запрашивает авторизационый токен
 func getAccessToken(code string) (token string) {
 	link, _ := url.Parse(config.OAuthHost + "/login/oauth/access_token")
@@ -252,35 +288,6 @@ func getRepository(ownerLogin string, repoName string, token string) (repo GitHu
 
 	return
 }
-
-//// Подписываемся на события репозитория
-//func CreatePushHook(owner string, repo string) (hook Hook) {
-//	url := fmt.Sprintf("%v/repos/%v/%v/hooks", apiHost, owner, repo)
-//
-//	response, err := post(url, []byte(`{
-//		"name": "web",
-//		"active": true,
-//		"events": [
-//			"push",
-//		],
-//		"config": {
-//			"url": "https://localhost:8090/hook/` + owner + `/` + repo + `",
-//			"content_type": "json",
-//			"insecure_ssl": "0"
-//		}
-//	}`))
-//	if err != nil {
-//		return
-//	}
-//
-//	err = json.Unmarshal(response, &hook)
-//	if err != nil {
-//		log.Fatal("Can't parse hook response. ", err, string(response))
-//		return
-//	}
-//
-//	return
-//}
 
 // Выполняет POST запрос
 func post(url string, query []byte, token string) (response GitHubResponse, err error) {
