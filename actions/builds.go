@@ -44,7 +44,7 @@ func run(w http.ResponseWriter, req *http.Request, user models.User) {
 	}
 	build.Save()
 
-	go process(project, build)
+	go Process(project, build)
 
 	http.Redirect(w, req, "/builds/watch?buildId="+fmt.Sprintf("%v", build.Id), http.StatusSeeOther)
 }
@@ -76,7 +76,7 @@ func watch(w http.ResponseWriter, req *http.Request, user models.User) {
 }
 
 // Перенести в воркер
-func process(project models.Project, build models.Build) {
+func Process(project models.Project, build models.Build) {
 	dir, _ := os.Getwd()
 
 	// Стандартный шаг с копированием репозитория

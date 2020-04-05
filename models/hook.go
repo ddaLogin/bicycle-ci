@@ -18,7 +18,7 @@ type WebHook struct {
 
 // Хелпер для генерации урла по которому хук будет трегериться
 func (wh WebHook) GetTriggerUrl() string {
-	return "https://faf5cdc5.ngrok.io/hooks/trigger?hookId=" + strconv.Itoa(int(wh.Id))
+	return "https://ee859862.ngrok.io/hooks/trigger?hookId=" + strconv.Itoa(int(wh.Id))
 }
 
 // Сохранить WebHook
@@ -98,6 +98,35 @@ func GetHooksByProjectId(projectId string) (hooks []WebHook) {
 		}
 
 		hooks = append(hooks, hook)
+	}
+
+	return
+}
+
+// Получить hook по идентификатору
+func GetHookById(id string) (hook WebHook) {
+	db := database.Db()
+	defer db.Close()
+	rows, err := db.Query("SELECT * FROM hooks WHERE id = ?", id)
+	if err != nil {
+		log.Println("Can't get hook by id. ", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(
+			&hook.Id,
+			&hook.ProjectId,
+			&hook.UserId,
+			&hook.HookId,
+			&hook.Event,
+			&hook.Branch,
+		)
+		if err != nil {
+			log.Println("Can't scan hook by id. ", err)
+			continue
+		}
 	}
 
 	return
