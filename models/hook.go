@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+var Host string
+
 // Модель WebHook'а
 type WebHook struct {
 	Id        int64   // Идентификатор хука
@@ -18,7 +20,7 @@ type WebHook struct {
 
 // Хелпер для генерации урла по которому хук будет трегериться
 func (wh WebHook) GetTriggerUrl() string {
-	return "https://ee859862.ngrok.io/hooks/trigger?hookId=" + strconv.Itoa(int(wh.Id))
+	return Host + "/hooks/trigger?hookId=" + strconv.Itoa(int(wh.Id))
 }
 
 // Сохранить WebHook

@@ -6,15 +6,18 @@ import (
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/providers"
 	"github.com/ddalogin/bicycle-ci/templates"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Мдель хука получаемого от гитхаба
 type HookPayload struct {
-	Ref string
+	Ref     string
+	Commits []struct {
+		Message string
+	}
 }
 
 // Страница списка хуков проекта
@@ -114,10 +117,11 @@ func hookTrigger(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		decoder := json.NewDecoder(req.Body)
 		var payload HookPayload
+		decoder := json.NewDecoder(req.Body)
 		err := decoder.Decode(&payload)
 		if err != nil {
+			log.Print("Can't read GitHub hook. ", err, payload)
 			http.NotFound(w, req)
 			return
 		}
@@ -130,16 +134,10 @@ func hookTrigger(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			build := models.Build{
-				ProjectId: project.Id,
-				StartedAt: time.Now().Format("2006-01-02 15:04:05"),
-				Status:    models.STATUS_RUNNING,
-			}
-			build.Save()
-
-			go Process(project, build)
+			RunProcess(project, payload)
 
 			w.WriteHeader(200)
+			return
 		}
 	}
 

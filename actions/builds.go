@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
+	"github.com/ddalogin/bicycle-ci/telegram"
 	"github.com/ddalogin/bicycle-ci/templates"
 	"github.com/ddalogin/bicycle-ci/worker"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 	"strconv"
 	"time"
 )
+
+var Host string
 
 // Шаблон страницы билда
 type WatchPage struct {
@@ -37,14 +40,7 @@ func run(w http.ResponseWriter, req *http.Request, user models.User) {
 		return
 	}
 
-	build := models.Build{
-		ProjectId: project.Id,
-		StartedAt: time.Now().Format("2006-01-02 15:04:05"),
-		Status:    models.STATUS_RUNNING,
-	}
-	build.Save()
-
-	go Process(project, build)
+	build := RunProcess(project, HookPayload{})
 
 	http.Redirect(w, req, "/builds/watch?buildId="+fmt.Sprintf("%v", build.Id), http.StatusSeeOther)
 }
@@ -75,8 +71,24 @@ func watch(w http.ResponseWriter, req *http.Request, user models.User) {
 	}, user)
 }
 
+// Начинает сборку прокета
+func RunProcess(project models.Project, payload HookPayload) models.Build {
+	build := models.Build{
+		ProjectId: project.Id,
+		StartedAt: time.Now().Format("2006-01-02 15:04:05"),
+		Status:    models.STATUS_RUNNING,
+	}
+	build.Save()
+
+	notifyStartBuild(project, build, payload)
+
+	go process(project, build)
+
+	return build
+}
+
 // Перенести в воркер
-func Process(project models.Project, build models.Build) {
+func process(project models.Project, build models.Build) {
 	dir, _ := os.Getwd()
 
 	// Стандартный шаг с копированием репозитория
@@ -131,4 +143,53 @@ func Process(project models.Project, build models.Build) {
 	}
 
 	build.Save()
+
+	notifyResultBuild(project, build)
+}
+
+// Уведомляет о начале сборки
+func notifyStartBuild(project models.Project, build models.Build, payload HookPayload) {
+	buildUrl := Host + "/builds/watch?buildId=" + fmt.Sprintf("%v", build.Id)
+	message := `[#` + strconv.Itoa(int(build.Id)) + ` Начата сборка проекта \"` + project.Name + `\".](` + buildUrl + `) \r\n`
+
+	if payload.Ref != "" {
+		message = message + `*Комиты попавшие в сборку* \r\n`
+		for _, commit := range payload.Commits {
+			message = message + commit.Message + "\r\n"
+		}
+	}
+
+	telegram.SendMessage(message)
+}
+
+// Уведомляет о результате сборки
+func notifyResultBuild(project models.Project, build models.Build) {
+	buildUrl := Host + "/builds/watch?buildId=" + fmt.Sprintf("%v", build.Id)
+	message := `[#` + strconv.Itoa(int(build.Id)) + ` сборка проекта \"` + project.Name + `\" завершилась.](` + buildUrl + `) \r\n`
+	message = message + `*Статус шагов*: \r\n`
+
+	steps := models.GetStepsByBuildId(build.Id)
+	for _, step := range steps {
+		status := "Running"
+
+		if step.Status == models.STEP_STATUS_FAILED {
+			status = "Failed"
+		} else if step.Status == models.STEP_STATUS_SUCCESS {
+			status = "Success"
+		}
+
+		message = message + step.Name + ": " + status + "\r\n"
+	}
+
+	buildStatus := "Running"
+
+	if build.Status == models.STATUS_FAILED {
+		buildStatus = "Failed"
+	} else if build.Status == models.STATUS_SUCCESS {
+		buildStatus = "Success"
+	}
+
+	message = message + `*Статус сборки*: ` + buildStatus + `\r\n`
+
+	telegram.SendMessage(message)
 }

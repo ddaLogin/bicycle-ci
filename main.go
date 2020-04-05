@@ -4,7 +4,9 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/ddalogin/bicycle-ci/actions"
 	"github.com/ddalogin/bicycle-ci/database"
+	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/providers/github"
+	"github.com/ddalogin/bicycle-ci/telegram"
 	"io"
 	"log"
 	"net/http"
@@ -12,9 +14,10 @@ import (
 )
 
 type Config struct {
-	Url    string
-	Db     database.Config
-	Github github.Config
+	Url      string
+	Db       database.Config
+	Github   github.Config
+	Telegram telegram.Config
 }
 
 func init() {
@@ -23,9 +26,12 @@ func init() {
 
 func main() {
 	cfg := loadConfig()
+	actions.Host = cfg.Url
+	models.Host = cfg.Url
 
 	database.SetConfig(cfg.Db)
 	github.SetConfig(cfg.Github)
+	telegram.SetConfig(cfg.Telegram)
 
 	startServer(cfg)
 }

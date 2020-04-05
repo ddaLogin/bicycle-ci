@@ -11,3 +11,8 @@ clientSecret = ""
 oAuthHost = "https://github.com"
 apiHost = "https://api.github.com"
 image = "https://apptractor.ru/wp-content/uploads/2019/05/github-octocat.png"
+
+[telegram]
+host = "https://api.telegram.org"
+token = ""
+chatId = ""
