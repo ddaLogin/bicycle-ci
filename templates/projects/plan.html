@@ -29,6 +29,17 @@
                         <label for="dir" class="text-white">Specify the project folder to be deployed, leave blank if you need to copy the entire project</label>
                         <input type="text" name="artifact_dir" class="form-control" value="{{ if .Content.Project.ArtifactDir }}{{ .Content.Project.ArtifactDir }}{{ end }}"/>
                     </div>
+
+                    <div class="form-group">
+                        <label for="server" class="text-white">Choose server if it remote deploy</label>
+                        <select class="form-control" id="server" name="server_id">
+                            <option value="0">Local</option>
+                            {{ range $key, $server := .Content.Servers }}
+                                <option value="{{ $server.Id }}">{{ $server.Name }}</option>
+                            {{ end }}
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="dir" class="text-white">Indicate the absolute path to the server directory into which you want to deploy the application</label>
                         <input type="text" name="deploy_dir" class="form-control" value="{{ if .Content.Project.DeployDir }}{{ .Content.Project.DeployDir }}{{ end }}" required/>

@@ -28,8 +28,9 @@ type Project struct {
 	DeployKeyId   *int    // Идентификатор ключа деплоя
 	DeployPrivate *string // Приватный SSH ключ
 	BuildPlan     *string // Build plan проекта
-	DeployDir     *string // Deploy plan проекта
 	ArtifactDir   *string // Папка проекта которую надо задеплоить
+	ServerId      *int    // Сервер для удаленного деплоя, null = local
+	DeployDir     *string // Deploy plan проекта
 }
 
 // Получить статус проекта
@@ -107,8 +108,8 @@ func (pr Project) Save() bool {
 	defer db.Close()
 
 	if pr.Id == 0 {
-		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, deploy_key_id, deploy_private, build_plan, deploy_dir, artifact_dir) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.BuildPlan, pr.DeployDir, pr.ArtifactDir)
+		result, err := db.Exec("insert into projects (user_id, `name`, provider, repo_id, repo_name, repo_owner_name, repo_owner_id, deploy_key_id, deploy_private, build_plan, deploy_dir, artifact_dir, server_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.BuildPlan, pr.DeployDir, pr.ArtifactDir, pr.ServerId)
 		if err != nil {
 			log.Println("Can't insert Project. ", err, pr)
 			return false
@@ -118,8 +119,8 @@ func (pr Project) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, deploy_key_id = ?, deploy_private = ?, build_plan = ?, deploy_dir = ?, artifact_dir = ? WHERE id = ?",
-			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.BuildPlan, pr.DeployDir, pr.ArtifactDir, pr.Id)
+		_, err := db.Exec("UPDATE projects SET user_id = ?, `name` = ?, provider = ?, repo_id = ?, repo_name = ?, repo_owner_name = ?, repo_owner_id = ?, deploy_key_id = ?, deploy_private = ?, build_plan = ?, deploy_dir = ?, artifact_dir = ?, server_id = ? WHERE id = ?",
+			pr.UserId, pr.Name, pr.Provider, pr.RepoId, pr.RepoName, pr.RepoOwnerName, pr.RepoOwnerId, pr.DeployKeyId, pr.DeployPrivate, pr.BuildPlan, pr.DeployDir, pr.ArtifactDir, pr.ServerId, pr.Id)
 		if err != nil {
 			log.Println("Can't update Project. ", err, pr)
 			return false
@@ -156,8 +157,9 @@ func GetProjectsByUserId(userId int) (projects []Project) {
 			&project.DeployKeyId,
 			&project.DeployPrivate,
 			&project.BuildPlan,
-			&project.DeployDir,
 			&project.ArtifactDir,
+			&project.ServerId,
+			&project.DeployDir,
 		)
 		if err != nil {
 			log.Println("Can't scan projects by user id. ", err)
@@ -194,8 +196,9 @@ func GetProjectById(id string) (project Project) {
 			&project.DeployKeyId,
 			&project.DeployPrivate,
 			&project.BuildPlan,
-			&project.DeployDir,
 			&project.ArtifactDir,
+			&project.ServerId,
+			&project.DeployDir,
 		)
 		if err != nil {
 			log.Println("Can't scan project by id. ", err)

@@ -167,8 +167,9 @@ func GetBuildsWithProjects() (builds []Build) {
 			&project.DeployKeyId,
 			&project.DeployPrivate,
 			&project.BuildPlan,
-			&project.DeployDir,
 			&project.ArtifactDir,
+			&project.ServerId,
+			&project.DeployDir,
 		)
 		if err != nil {
 			log.Println("Can't scan Build with projects like list. ", err)

@@ -1,6 +1,6 @@
 printf "Adding a Private Key\n";
 eval `ssh-agent -s`;
-ssh-add - <<< "${SSHKEY}";
+ssh-add - <<< "${SSH_KEY}";
 if [ $? -eq 0 ]; then
     printf "Key added successfully\n";
 else

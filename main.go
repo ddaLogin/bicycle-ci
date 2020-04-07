@@ -64,6 +64,7 @@ func startServer(cfg Config) {
 	actions.HookRoutes()
 	actions.ProviderRoutes()
 	actions.BuildsRoutes()
+	actions.ServerRoutes()
 
 	http.ListenAndServe(":8090", nil)
 }

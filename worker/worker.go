@@ -16,7 +16,14 @@ func RunStep(project models.Project, cmd *exec.Cmd, result *models.Step) {
 	env = append(env, "NAME="+project.Name)
 	env = append(env, "DEPLOY_DIR="+strings.TrimSpace(*project.DeployDir))
 	env = append(env, "ARTIFACT_DIR="+strings.TrimSpace(*project.ArtifactDir))
-	env = append(env, "SSHKEY="+*project.DeployPrivate)
+	env = append(env, "SSH_KEY="+*project.DeployPrivate)
+
+	if *project.ServerId != 0 && project.ServerId != nil {
+		server := models.GetServerById(*project.ServerId)
+		env = append(env, "USER="+server.Login)
+		env = append(env, "HOST="+server.Host)
+		env = append(env, "SSH_KEY_REMOTE="+server.DeployPrivate)
+	}
 
 	cmd.Env = env
 	cmd.Stdout = &stdout

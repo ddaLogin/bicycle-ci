@@ -124,7 +124,13 @@ func process(project models.Project, build models.Build) {
 		Status:  models.STEP_STATUS_RUNING,
 	}
 	deployStep.Save()
-	worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
+
+	if *project.ServerId == 0 || project.ServerId == nil {
+		worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
+	} else {
+		worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy_remote.sh"), &deployStep)
+	}
+
 	deployStep.Save()
 
 	cleanStep := models.Step{

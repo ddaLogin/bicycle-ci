@@ -1,0 +1,32 @@
+{{define "content"}}
+    <div class="container-fluid">
+        <h1 class="display-5">Servers <a href="/servers/create" class="btn btn-outline-success btn-sm">Create new server</a></h1>
+
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">#ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Login</th>
+                    <th scope="col">Host</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range $key, $server := .Content.Servers }}
+                    <tr>
+                        <th scope="row"><a href="/servers/create?serverId={{ $server.Id }}">{{ $server.Id }}</a></th>
+                        <td>{{ $server.Name }}</td>
+                        <td>{{ $server.Login}}</td>
+                        <td>{{ $server.Host}}</td>
+                    </tr>
+                {{ else }}
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            <h1 class="display-5">Empty list. <a href="/servers/create">Add your first server</a></h1>
+                        </td>
+                    </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{end}}
