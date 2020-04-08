@@ -23,11 +23,11 @@ type Build struct {
 func (b Build) StatusTitle() string {
 	switch b.Status {
 	case STATUS_RUNNING:
-		return "In progress"
+		return "В процессе"
 	case STATUS_SUCCESS:
-		return "Success build"
+		return "Успешно"
 	case STATUS_FAILED:
-		return "Build failed"
+		return "Ошибка"
 	}
 
 	return ""

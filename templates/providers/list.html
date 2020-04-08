@@ -12,18 +12,17 @@
         <div class="row">
             {{ range $key, $provider := .Content.Providers }}
                 <div class="col-md-3 col-sm-6 col-xs-12">
-                    <a href="{{ $provider.GetAuthLink }}">
-                        <div class="info-box">
-                            <span class="info-box-icon bg-aqua">
-                                <img src="{{ $provider.GetImageUrl }}" alt="...">
-                            </span>
-
-                            <div class="info-box-content">
-                                <span class="info-box-text">{{ $provider.GetTitle }}</span>
-                                <span class="info-box-number">Подключить</span>
-                            </div>
+                    <div class="small-box bg-gradient-primary">
+                        <div class="inner">
+                            <h3>{{ $provider.GetTitle }}</h3>
                         </div>
-                    </a>
+                        <div class="icon">
+                            <i class="{{ $provider.GetImageUrl }}"></i>
+                        </div>
+                        <a href="{{ $provider.GetAuthLink }}" class="small-box-footer">
+                            Выбрать репозиторий <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
                 </div>
             {{ end }}
         </div>

@@ -1,17 +1,16 @@
 {{define "content"}}
     <div class="col col-sm-10 offset-1">
-        <section class="content-header">
-            <h1>Список серверов
-                <a href="/servers/create" class="btn btn-flat btn-success btn-sm float-right">
-                    <i class="fas fa-plus"></i>
-                    Создать сервер
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-server"></i> Список серверов</h3>
+                <a href="/servers/create" class="btn btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i> Создать сервер
                 </a>
-            </h1>
-        </section>
+            </div>
 
-        <div class="box-body">
-            <table class="table table-bordered">
-                <tbody>
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
                     <tr>
                         <th style="width: 10px">#</th>
                         <th>Имя сервера</th>
@@ -19,6 +18,8 @@
                         <th>Хост сервера</th>
                         <th>Действия</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     {{ range $key, $server := .Content.Servers }}
                         <tr>
                             <th scope="row">{{ $server.Id }}</th>
@@ -32,8 +33,9 @@
                             </td>
                         </tr>
                     {{ end }}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {{end}}

@@ -1,45 +1,58 @@
 {{define "content"}}
-    <br>
-    <br>
-    <br>
-    <div class="col col-sm-6 offset-3">
-        <section class="content-header">
-            <h1 class="text-center">Удаленный сервер</h1>
-        </section>
+    <div class="col col-md-8 offset-2">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Удаленный сервер</h3>
+            </div>
 
-        <div class="box-body">
             {{if .Content.Message}}
                 <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
             {{end}}
 
-            <form action="/servers/create?projectId={{ .Content.Server.Id }}" method="post">
-                <div class="form-group">
-                    <input type="text" class="form-control" name="name" placeholder="Имя сервера" value="{{ if .Content.Server.Name }}{{ .Content.Server.Name }}{{ end }}" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" class="form-control" name="login" placeholder="Имя пользователя" value="{{ if .Content.Server.Login }}{{ .Content.Server.Login }}{{ end }}" required>
-                </div>
-                <div class="form-group">
-                    <input type="text" class="form-control" name="host" placeholder="Хост сервера" value="{{ if .Content.Server.Host }}{{ .Content.Server.Host }}{{ end }}" required>
-                </div>
-
-                {{if .Content.Server.DeployPublic }}
-                    <div class="alert alert-info"><p class="text-break">{{ .Content.Server.DeployPublic }}</p></div>
-                {{end}}
-
-                <div class="row">
-                    <div class="col col-sm-9">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="true" id="keys" name="generate">
-                            <label class="form-check-label" for="keys">Сгенерировать/Обновить ключи доступа</label>
+            <form role="form" action="/servers/create?projectId={{ .Content.Server.Id }}" method="post">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="name">Имя сервера</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-comment-dots"></i></span>
+                            </div>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Мой тестовый сервер" value="{{ if .Content.Server.Name }}{{ .Content.Server.Name }}{{ end }}" required>
                         </div>
                     </div>
-                    <div class="col col-sm-3">
-                        <button type="submit" class="btn btn-flat btn-success col-sm-12">
-                            <i class="fas fa-save"></i>
-                            Сохранить
-                        </button>
+                    <div class="form-group">
+                        <label for="login">Имя пользователя для подключения</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            </div>
+                            <input type="text" class="form-control" id="login" name="login" placeholder="Имя пользователя" value="{{ if .Content.Server.Login }}{{ .Content.Server.Login }}{{ end }}" required>
+                        </div>
                     </div>
+                    <div class="form-group">
+                        <label for="host">Хост сервера</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-laptop"></i></span>
+                            </div>
+                            <input type="text" class="form-control" id="host" name="host" placeholder="127.0.0.1" value="{{ if .Content.Server.Host }}{{ .Content.Server.Host }}{{ end }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="icheck-primary d-inline">
+                            <input type="checkbox" value="true" id="keys" name="generate">
+                            <label for="keys">Сгенерировать/Обновить ключи доступа</label>
+                        </div>
+                    </div>
+
+                    {{if .Content.Server.DeployPublic }}
+                        <div class="alert alert-info"><p class="text-break">{{ .Content.Server.DeployPublic }}</p></div>
+                    {{end}}
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success float-right"><i class="fas fa-save"></i> Сохранить</button>
                 </div>
             </form>
         </div>

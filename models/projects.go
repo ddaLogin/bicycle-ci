@@ -58,21 +58,21 @@ func (pr Project) Status() int {
 func (pr Project) StatusTitle() string {
 	switch pr.Status() {
 	case STATUS_NOT_ENABLED:
-		return "Not enabled"
+		return "Не активен"
 	case STATUS_NOT_CLONABLE:
-		return "Set deploy keys"
+		return "Установите VCS ключи"
 	case STATUS_NOT_CONFIGURED:
-		return "Configure build plan"
+		return "Создайте план сборки"
 	case STATUS_NOT_DEPLOYABLE:
-		return "Set artifact and deploy directory"
+		return "Укажите директорию развертывания"
 	case STATUS_READY:
-		return "Ready for build and deploy"
+		return "Готов к сборке"
 	case STATUS_BUILD_PROCESS:
-		return "Build in progress"
+		return "Сборка в процессе"
 	case STATUS_BUILD_SUCCESS:
-		return "Build success"
+		return "Успешная сборка"
 	case STATUS_BUILD_FAILED:
-		return "Build failed"
+		return "Ошибка в сборке"
 	}
 
 	return ""
@@ -90,9 +90,9 @@ func (pr Project) StatusColor() string {
 	case STATUS_NOT_DEPLOYABLE:
 		return "warning"
 	case STATUS_READY:
-		return "info"
-	case STATUS_BUILD_PROCESS:
 		return "primary"
+	case STATUS_BUILD_PROCESS:
+		return "info"
 	case STATUS_BUILD_SUCCESS:
 		return "success"
 	case STATUS_BUILD_FAILED:

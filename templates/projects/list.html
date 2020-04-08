@@ -1,60 +1,61 @@
 {{define "content"}}
     <div class="col col-sm-10 offset-1">
-        <section class="content-header">
-            <h1>Список проектов
-                <a href="/providers/list" class="btn btn-flat btn-success btn-sm float-right">
-                    <i class="fas fa-plus"></i>
-                    Создать проект
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-folder"></i> Список проектов</h3>
+                <a href="/providers/list" class="btn btn-success btn-sm float-right">
+                    <i class="fas fa-folder-plus"></i> Создать проект
                 </a>
-            </h1>
-        </section>
+            </div>
 
-        <div class="box-body">
-            <table class="table table-bordered">
-                <tbody>
-                <tr>
-                    <th style="width: 10px">#</th>
-                    <th>Имя проекта</th>
-                    <th>Статус</th>
-                    <th>Действия</th>
-                </tr>
-                {{ range $key, $project := .Content.Projects }}
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
                     <tr>
-                        <th scope="row">{{ $project.Id }}</th>
-                        <td>{{ $project.Name }}</td>
-                        <td>
-                            <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <a href="/builds/run?projectId={{ $project.Id }}" class="btn btn-sm btn-primary {{ if (lt $project.Status 3) }} disabled {{ end }}">
-                                    <i class="fas fa-play-circle"></i>
-                                    Запустить сборку
-                                </a>
-                                <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="sr-only">Toggle Dropdown</span>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="/projects/plan?projectId={{ $project.Id }}">
-                                        <i class="fas fa-list"></i>
-                                        План сборки
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="/projects/deploy?projectId={{ $project.Id }}">
-                                        <i class="fas fa-key"></i>
-                                        VCS ключи
-                                    </a>
-                                    <a class="dropdown-item" href="/hooks/list?projectId={{ $project.Id }}">
-                                        <i class="fas fa-eye"></i>
-                                        VCS триггеры
-                                    </a>
-                                </div>
-                            </div>
-                        </td>
+                        <th style="width: 10px">#</th>
+                        <th>Имя проекта</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
                     </tr>
-                {{ end }}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {{ range $key, $project := .Content.Projects }}
+                        <tr>
+                            <th scope="row">{{ $project.Id }}</th>
+                            <td>{{ $project.Name }}</td>
+                            <td>
+                                <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/builds/run?projectId={{ $project.Id }}" class="btn btn-sm btn-primary {{ if (lt $project.Status 3) }} disabled {{ end }}">
+                                        <i class="fas fa-play"></i> Запустить сборку
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="sr-only">Toggle Dropdown</span>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a class="dropdown-item" href="/projects/plan?projectId={{ $project.Id }}">
+                                            <i class="fas fa-list"></i>
+                                            План сборки
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="/projects/deploy?projectId={{ $project.Id }}">
+                                            <i class="fas fa-key"></i>
+                                            VCS ключи
+                                        </a>
+                                        <a class="dropdown-item" href="/hooks/list?projectId={{ $project.Id }}">
+                                            <i class="fas fa-eye"></i>
+                                            VCS триггеры
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {{end}}

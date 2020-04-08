@@ -1,34 +1,38 @@
 {{define "content"}}
     <div class="col col-sm-10 offset-1">
-        <section class="content-header">
-            <h1>Последние сборки</h1>
-        </section>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-boxes"></i> Последние сборки</h3>
+            </div>
 
-        <div class="box-body">
-            <table class="table table-bordered">
-                <tbody>
-                    <tr>
-                        <th style="width: 10px">#</th>
-                        <th>Проект</th>
-                        <th>Статус сборки</th>
-                        <th>Время начала сборки</th>
-                    </tr>
-                    {{ range $key, $build := .Content.Builds }}
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
                         <tr>
-                            <th scope="row">{{ $build.Id }}</th>
-                            <td>{{ $build.Project.Name }}</td>
-                            <td>
-                                <a href="/builds/watch?buildId={{ $build.Id }}">
-                                    <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>
-                                </a>
-                            </td>
-                            <td>
-                                {{ $build.StartedAt }}
-                            </td>
+                            <th style="width: 10px">#</th>
+                            <th>Проект</th>
+                            <th>Статус сборки</th>
+                            <th>Время начала сборки</th>
                         </tr>
-                    {{ end }}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {{ range $key, $build := .Content.Builds }}
+                            <tr>
+                                <th scope="row">{{ $build.Id }}</th>
+                                <td>{{ $build.Project.Name }}</td>
+                                <td>
+                                    <a href="/builds/watch?buildId={{ $build.Id }}">
+                                        <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>
+                                    </a>
+                                </td>
+                                <td>
+                                    {{ $build.StartedAt }}
+                                </td>
+                            </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {{end}}

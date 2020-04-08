@@ -1,33 +1,37 @@
 {{define "content"}}
     <div class="col col-sm-10 offset-1">
-        <section class="content-header">
-            <h1>Список репозиториев</h1>
-        </section>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-code-branch"></i> Список репозиториев</h3>
+            </div>
 
-        <div class="box-body">
-            <table class="table table-bordered">
-                <tbody>
-                <tr>
-                    <th>Репозиторий</th>
-                    <th>Действие</th>
-                </tr>
-                {{ range $key, $project := .Content.ProjectsToEnable }}
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
                     <tr>
-                        <td>{{ $project.Name }}</td>
-                        <td>
-                            {{ if not $project.Status }}
-                                <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}"
-                                   class="btn btn-flat btn-primary btn-sm">
-                                    <i class="fas fa-folder-open"></i> Развернуть проект
-                                </a>
-                            {{ else }}
-                                <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
-                            {{ end }}
-                        </td>
+                        <th>Репозиторий</th>
+                        <th>Действие</th>
                     </tr>
-                {{ end }}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {{ range $key, $project := .Content.ProjectsToEnable }}
+                        <tr>
+                            <td>{{ $project.Name }}</td>
+                            <td>
+                                {{ if not $project.Status }}
+                                    <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}"
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-folder-plus"></i> Создать проект
+                                    </a>
+                                {{ else }}
+                                    <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
+                                {{ end }}
+                            </td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {{end}}
