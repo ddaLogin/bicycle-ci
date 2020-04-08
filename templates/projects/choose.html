@@ -1,36 +1,33 @@
 {{define "content"}}
-    <div class="container-fluid">
-        <h1 class="display-5">Your repos</h1>
+    <div class="col col-sm-10 offset-1">
+        <section class="content-header">
+            <h1>Список репозиториев</h1>
+        </section>
 
-        <table class="table">
-            <thead class="thead-dark">
+        <div class="box-body">
+            <table class="table table-bordered">
+                <tbody>
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
+                    <th>Репозиторий</th>
+                    <th>Действие</th>
                 </tr>
-            </thead>
-            <tbody>
                 {{ range $key, $project := .Content.ProjectsToEnable }}
                     <tr>
                         <td>{{ $project.Name }}</td>
                         <td>
-                            <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
-                        </td>
-                        <td>
                             {{ if not $project.Status }}
-                                <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}" class="btn btn-sm btn-outline-success">Enable</a>
+                                <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}"
+                                   class="btn btn-flat btn-primary btn-sm">
+                                    <i class="fas fa-folder-open"></i> Развернуть проект
+                                </a>
+                            {{ else }}
+                                <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>
                             {{ end }}
                         </td>
                     </tr>
-                {{ else }}
-                    <tr>
-                        <td colspan="3" class="text-center">
-                            <h1 class="display-5">Empty list.</h1>
-                        </td>
-                    </tr>
                 {{ end }}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 {{end}}

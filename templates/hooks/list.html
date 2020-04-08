@@ -1,30 +1,31 @@
 {{define "content"}}
-    <div class="container-fluid">
-        <h1 class="display-5">Hooks <a href="/hooks/create?projectId={{ .Content.Project.Id }}" class="btn btn-outline-success btn-sm">Create new Hook</a></h1>
+    <div class="col col-sm-10 offset-1">
+        <section class="content-header">
+            <h1>VCS триггеры проекта &laquo;{{ .Content.Project.Name }}&raquo;
+                <a href="/hooks/create?projectId={{ .Content.Project.Id }}" class="btn btn-flat btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i>
+                    Создать VCS триггер
+                </a>
+            </h1>
+        </section>
 
-        <table class="table">
-            <thead class="thead-dark">
-            <tr>
-                <th scope="col">#ID</th>
-                <th scope="col">Event</th>
-                <th scope="col">Branch</th>
-            </tr>
-            </thead>
-            <tbody>
-            {{ range $key, $hook := .Content.Hooks }}
-                <tr>
-                    <th scope="row">{{ $hook.Id }}</th>
-                    <td>{{ $hook.Event }}</td>
-                    <td>{{ $hook.Branch }}</td>
-                </tr>
-            {{ else }}
-                <tr>
-                    <td colspan="3" class="text-center">
-                        <h1 class="display-5">Empty list. <a href="/hooks/create?projectId={{ .Content.Project.Id }}">Create your first hook</a></h1>
-                    </td>
-                </tr>
-            {{ end }}
-            </tbody>
-        </table>
+        <div class="box-body">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th style="width: 10px">#</th>
+                        <th>VCS событие</th>
+                        <th>Целевая ветка</th>
+                    </tr>
+                    {{ range $key, $hook := .Content.Hooks }}
+                        <tr>
+                            <th scope="row">{{ $hook.Id }}</th>
+                            <td>{{ $hook.Event }}</td>
+                            <td>{{ $hook.Branch }}</td>
+                        </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
     </div>
 {{end}}

@@ -1,53 +1,73 @@
 {{define "content"}}
-    <div class="container">
-        <h4 class="display-5 text-center">Build plan of &laquo;{{ .Content.Project.Name }}&raquo;</h4>
+    <div class="col col-sm-8 offset-2">
+        <section class="content-header text-center">
+            <h1>План сборки проекта &laquo;{{ .Content.Project.Name }}&raquo;</h1>
+        </section>
+
         {{if .Content.Message}}
             <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
         {{end}}
-        <div class="card">
-            <div class="card-header text-white bg-info">Step: Cloning repository</div>
-            <div class="card-body bg-dark">
-                <pre class="card-text text-info">The first step is to automatically clone your project</pre>
+
+        <div class="small-box aqua bg-dark">
+            <div class="inner">
+                <h3>Клонирование проекта</h3>
+                <p>Проект будет автоматически клонирован с вашего репозитория</p>
+            </div>
+            <div class="icon">
+                <i class="fa fa-cloud-download-alt"></i>
             </div>
         </div>
-        <form action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
-            <div class="card">
-                <div class="card-header text-white bg-primary">Step: Build project</div>
-                <div class="card-body bg-dark">
-                    <pre class="card-text text-info">The second step is to build your project</pre>
+
+        <form class="form-horizontal" action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
+            <div class="small-box aqua bg-dark">
+                <div class="inner">
+                    <h3>Сборка проекта</h3>
                     <div class="form-group">
-                        <label for="exampleFormControlTextarea1" class="text-white">Make your bash script to build project</label>
+                        <label for="exampleFormControlTextarea1" class="text-white">
+                            Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
+                        </label>
                         <textarea name="plan" class="form-control" id="exampleFormControlTextarea1" rows="6" required>{{ if .Content.Project.BuildPlan }}{{ .Content.Project.BuildPlan }}{{ end }}</textarea>
                     </div>
                 </div>
+                <div class="icon">
+                    <i class="fa fa-cogs"></i>
+                </div>
             </div>
-            <div class="card">
-                <div class="card-header text-white bg-primary">Step: Deploy project</div>
-                <div class="card-body bg-dark">
-                    <pre class="card-text text-info">The third step is deployment your project</pre>
+            <div class="small-box aqua bg-dark">
+                <div class="inner">
+                    <h3>Развертывание проекта</h3>
                     <div class="form-group">
-                        <label for="dir" class="text-white">Specify the project folder to be deployed, leave blank if you need to copy the entire project</label>
-                        <input type="text" name="artifact_dir" class="form-control" value="{{ if .Content.Project.ArtifactDir }}{{ .Content.Project.ArtifactDir }}{{ end }}"/>
+                        <label for="artifactDir" class="text-white">
+                            Укажите локальный путь относительно проекта, к директории которую необходимо развернуть.
+                            <br>
+                            Оставить пустым для копирования всего проекта
+                        </label>
+                        <input type="text" id="artifactDir" name="artifact_dir" class="form-control" value="{{ if .Content.Project.ArtifactDir }}{{ .Content.Project.ArtifactDir }}{{ end }}"/>
                     </div>
-
                     <div class="form-group">
-                        <label for="server" class="text-white">Choose server if it remote deploy</label>
+                        <label for="server" class="text-white">Укажите целевой сервер для развертывания</label>
                         <select class="form-control" id="server" name="server_id">
-                            <option value="0">Local</option>
+                            <option value="0">Локально (относительно системы сборки)</option>
                             {{ range $key, $server := .Content.Servers }}
                                 <option value="{{ $server.Id }}">{{ $server.Name }}</option>
                             {{ end }}
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label for="dir" class="text-white">Indicate the absolute path to the server directory into which you want to deploy the application</label>
-                        <input type="text" name="deploy_dir" class="form-control" value="{{ if .Content.Project.DeployDir }}{{ .Content.Project.DeployDir }}{{ end }}" required/>
+                        <label for="deployDir" class="text-white">Укажите абсолютный путь к директории развертывания</label>
+                        <input type="text" id="deployDir" name="deploy_dir" class="form-control" value="{{ if .Content.Project.DeployDir }}{{ .Content.Project.DeployDir }}{{ end }}" required/>
                     </div>
                 </div>
+                <div class="icon">
+                    <i class="fa fa-cloud-upload-alt"></i>
+                </div>
             </div>
-            <br>
-            <input type="submit" class="btn btn-outline-success float-right" value="Save plan">
+
+            <div class="form-group">
+                <button type="button" class="btn btn-flat aqua bg-dark btn-lg float-right">
+                    <i class="fas fa-save"></i> Сохранить
+                </button>
+            </div>
             <br>
             <br>
             <br>

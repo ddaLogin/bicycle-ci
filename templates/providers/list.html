@@ -1,19 +1,29 @@
 {{define "content"}}
-    <div class="container text-center">
-        <h1 class="display-5">Choose VSC provider</h1>
+    <div class="col col-sm-10 offset-1">
+        <section class="content-header text-center">
+            <h1>Выберите VCS систему проекта</h1>
+        </section>
+
         {{if .Content.Message}}
             <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
         {{end}}
+
+
         <div class="row">
             {{ range $key, $provider := .Content.Providers }}
-                <div class="col col-md-4">
-                    <div class="card" style="width: 18rem;">
-                        <img src="{{ $provider.GetImageUrl }}" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $provider.GetTitle }}</h5>
-                            <a href="{{ $provider.GetAuthLink }}" class="btn btn-outline-success">Connect account</a>
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <a href="{{ $provider.GetAuthLink }}">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-aqua">
+                                <img src="{{ $provider.GetImageUrl }}" alt="...">
+                            </span>
+
+                            <div class="info-box-content">
+                                <span class="info-box-text">{{ $provider.GetTitle }}</span>
+                                <span class="info-box-number">Подключить</span>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             {{ end }}
         </div>

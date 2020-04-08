@@ -1,32 +1,39 @@
 {{define "content"}}
-    <div class="container-fluid">
-        <h1 class="display-5">Servers <a href="/servers/create" class="btn btn-outline-success btn-sm">Create new server</a></h1>
+    <div class="col col-sm-10 offset-1">
+        <section class="content-header">
+            <h1>Список серверов
+                <a href="/servers/create" class="btn btn-flat btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i>
+                    Создать сервер
+                </a>
+            </h1>
+        </section>
 
-        <table class="table">
-            <thead class="thead-dark">
-                <tr>
-                    <th scope="col">#ID</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Login</th>
-                    <th scope="col">Host</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range $key, $server := .Content.Servers }}
+        <div class="box-body">
+            <table class="table table-bordered">
+                <tbody>
                     <tr>
-                        <th scope="row"><a href="/servers/create?serverId={{ $server.Id }}">{{ $server.Id }}</a></th>
-                        <td>{{ $server.Name }}</td>
-                        <td>{{ $server.Login}}</td>
-                        <td>{{ $server.Host}}</td>
+                        <th style="width: 10px">#</th>
+                        <th>Имя сервера</th>
+                        <th>Пользователь</th>
+                        <th>Хост сервера</th>
+                        <th>Действия</th>
                     </tr>
-                {{ else }}
-                    <tr>
-                        <td colspan="4" class="text-center">
-                            <h1 class="display-5">Empty list. <a href="/servers/create">Add your first server</a></h1>
-                        </td>
-                    </tr>
-                {{ end }}
-            </tbody>
-        </table>
+                    {{ range $key, $server := .Content.Servers }}
+                        <tr>
+                            <th scope="row">{{ $server.Id }}</th>
+                            <td>{{ $server.Name }}</td>
+                            <td>{{ $server.Login}}</td>
+                            <td>{{ $server.Host}}</td>
+                            <td>
+                                <a href="/servers/create?serverId={{ $server.Id }}">
+                                    Редактировать
+                                </a>
+                            </td>
+                        </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
     </div>
 {{end}}

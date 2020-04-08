@@ -1,27 +1,34 @@
 {{define "content"}}
-    <div class="container text-center">
-        <h1 class="display-5">Deploy key of &laquo;{{ .Content.Project.Name }}&raquo;</h1>
-        <br>
+    <div class="col col-sm-8 offset-2">
+        <section class="content-header text-center">
+            <h1>SSH ключи для VCS системы проекта &laquo;{{ .Content.Project.Name }}&raquo;</h1>
+        </section>
         {{if .Content.Message }}
             <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
         {{end}}
         <br>
         <form action="/projects/deploy?projectId={{ .Content.Project.Id }}" method="post">
             <div class="form-group">
-                <label for="exampleFormControlTextarea1">Typo key title</label>
+                <label for="exampleFormControlTextarea1">Имя SSH ключа</label>
                 <input type="text" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}" required/>
             </div>
             <div class="form-group">
-                <label for="exampleFormControlTextarea1">Set ssh public key</label>
+                <label for="exampleFormControlTextarea1">Публичный ключ</label>
                 <textarea name="public_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
             </div>
             <div class="form-group">
-                <label for="exampleFormControlTextarea1">Set ssh private key</label>
+                <label for="exampleFormControlTextarea1">Приватный ключ</label>
                 <textarea name="private_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
             </div>
             <div class="form-group">
-                <button type="submit" name="isNeedGenerated" class="btn btn-outline-success float-right" value="false">Save my key</button>
-                <button type="submit" name="isNeedGenerated" class="btn btn-outline-primary float-left" value="true">Generate key pair and save</button>
+                <button type="submit" name="isNeedGenerated" class="btn btn-flat btn-success btn-sm float-right" value="false">
+                    <i class="fas fa-save"></i>
+                    Сохранить ключи
+                </button>
+                <button type="submit" name="isNeedGenerated" class="btn btn-flat btn-primary btn-sm float-left" value="true">
+                    <i class="fas fa-key"></i>
+                    Сгенерировать ключ автоматически
+                </button>
             </div>
         </form>
     </div>
