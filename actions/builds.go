@@ -148,6 +148,8 @@ func process(project models.Project, build models.Build) {
 		build.Status = models.STATUS_FAILED
 	}
 
+	endTime := time.Now().Format("2006-01-02 15:04:05")
+	build.EndedAt = &endTime
 	build.Save()
 
 	notifyResultBuild(project, build)
@@ -157,6 +159,7 @@ func process(project models.Project, build models.Build) {
 func notifyStartBuild(project models.Project, build models.Build, payload HookPayload) {
 	buildUrl := Host + "/builds/watch?buildId=" + fmt.Sprintf("%v", build.Id)
 	message := `[#` + strconv.Itoa(int(build.Id)) + ` Начата сборка проекта \"` + project.Name + `\".](` + buildUrl + `) \r\n`
+	message = message + "\xE2\x8F\xB3 Приблизительное время сборки: " + project.GetAvgBuildTime() + " \r\n"
 
 	if payload.Ref != "" {
 		message = message + `*Комиты попавшие в сборку* \r\n`

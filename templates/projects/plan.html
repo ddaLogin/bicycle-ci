@@ -23,23 +23,20 @@
                         <div class="card-header">
                             <h3 class="card-title"><i class="fas fa-archive"></i> Сборка проекта</h3>
                         </div>
-                        <form role="form">
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="plan">
-                                        <i class="fas fa-scroll"></i> Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
-                                    </label>
-                                    <textarea name="plan" class="form-control" id="plan" rows="6" required>{{ if .Content.Project.BuildPlan }}{{ .Content.Project.BuildPlan }}{{ end }}</textarea>
-                                </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="plan">
+                                    <i class="fas fa-scroll"></i> Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
+                                </label>
+                                <textarea name="plan" class="form-control" id="plan" rows="6" required>{{ if .Content.Project.BuildPlan }}{{ .Content.Project.BuildPlan }}{{ end }}</textarea>
                             </div>
-                        </form>
+                        </div>
                     </div>
                     <div class="card card-primary">
                         <div class="card-header">
                             <h3 class="card-title"><i class="fas fa-cloud-upload-alt"></i> Развертывание проекта</h3>
                         </div>
-                        <form role="form">
-                            <div class="card-body">
+                        <div class="card-body">
                                 <div class="form-group">
                                     <label for="artifact">
                                         Укажите локальный путь относительно проекта, к директории которую необходимо развернуть.
@@ -77,7 +74,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
                     </div>
                 </div>
                 <div class="card-footer">

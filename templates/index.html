@@ -13,6 +13,7 @@
                             <th>Проект</th>
                             <th>Статус сборки</th>
                             <th>Время начала сборки</th>
+                            <th>Время окончания сборки</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -25,9 +26,8 @@
                                         <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>
                                     </a>
                                 </td>
-                                <td>
-                                    {{ $build.StartedAt }}
-                                </td>
+                                <td>{{ $build.StartedAt }}</td>
+                                <td>{{ if $build.EndedAt }} {{ $build.EndedAt }} {{ end }}</td>
                             </tr>
                         {{ end }}
                     </tbody>
