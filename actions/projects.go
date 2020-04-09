@@ -186,11 +186,8 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 			project.BuildPlan = &plan
 			project.DeployDir = &deployDir
 			project.ArtifactDir = &artifactDir
-
-			if serverId != "0" {
-				buff, _ := strconv.Atoi(serverId)
-				project.ServerId = &buff
-			}
+			buff, _ := strconv.Atoi(serverId)
+			project.ServerId = &buff
 
 			if project.Save() {
 				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)

@@ -16,7 +16,7 @@ type ProviderData struct {
 }
 
 // Сохранить данные о провайдере
-func (pd ProviderData) Save() bool {
+func (pd *ProviderData) Save() bool {
 	db := database.Db()
 	defer db.Close()
 

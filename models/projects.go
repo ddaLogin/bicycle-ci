@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"github.com/ddalogin/bicycle-ci/database"
 	"log"
 )
@@ -103,7 +104,7 @@ func (pr Project) StatusColor() string {
 }
 
 // Сохранить проект
-func (pr Project) Save() bool {
+func (pr *Project) Save() bool {
 	db := database.Db()
 	defer db.Close()
 
@@ -210,23 +211,20 @@ func GetProjectById(id string) (project Project) {
 }
 
 // Получить проект по идентификатору
-func (pr Project) GetAvgBuildTime() (time string) {
+func (pr Project) GetAvgBuildTime() string {
+	var time string
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("select RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5) as time from builds WHERE project_id = ?", pr.Id)
-	if err != nil {
-		log.Println("Can't get avg build time. ", err)
-		return
-	}
-	defer rows.Close()
 
-	for rows.Next() {
-		err := rows.Scan(&time)
-		if err != nil {
-			log.Println("Can't scan avg build time. ", err)
-			continue
-		}
+	err := db.QueryRow("select COALESCE(RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5), '') from builds WHERE project_id = ?", pr.Id).Scan(&time)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Println("Can't get avg time. ", err)
+		time = ""
+	case err != nil:
+		log.Println("Error while get avg time. ", err)
+		time = ""
 	}
 
-	return
+	return time
 }

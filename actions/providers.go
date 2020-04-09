@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/providers"
@@ -15,10 +14,6 @@ type ProvidersListPage struct {
 	Providers []providers.ProviderInterface
 	Message   string
 }
-
-//type ReposPage struct {
-//	Repos []github.Repo
-//}
 
 // Регистрация роутов по провайдерам
 func ProviderRoutes() {
@@ -63,5 +58,5 @@ func oAuthCallback(w http.ResponseWriter, req *http.Request, user models.User) {
 
 	providerData.Save()
 
-	http.Redirect(w, req, "/projects/choose?providerId="+fmt.Sprintf("%v", providerData.Id), http.StatusSeeOther)
+	http.Redirect(w, req, "/projects/choose?providerId="+strconv.Itoa(int(providerData.Id)), http.StatusSeeOther)
 }
