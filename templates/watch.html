@@ -1,54 +1,46 @@
 {{define "content"}}
-    <div class="container">
-        <div class="card text-center">
-            <div class="card-header">
-                <h2>Build of {{ .Content.Project.Name }}</h2>
-            </div>
-            <ul class="list-unstyled">
-                <div class="card-body text-left">
-                    {{ range $key, $stepResult := .Content.Output }}
-                        <div class="card {{ if (eq $stepResult.Status 0) }}bg-primary{{ end }} {{ if (eq $stepResult.Status 1) }}bg-danger{{ end }} {{ if (eq $stepResult.Status 2) }}bg-success{{ end }}">
-                            <div class="card-header text-white">
-                                Step: {{ $stepResult.Name }}
-                            </div>
-                            <div class="card-body bg-dark">
-                                {{ if (eq $stepResult.Status 0) }}
+<div class="col col-sm-8 offset-2">
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-archive"></i> Сборка проекта &laquo;{{ .Content.Project.Name }}&raquo;
+            </h3>
+        </div>
+        <div class="card-body text-center">
+            {{ range $key, $stepResult := .Content.Output }}
+                <div class="card {{ if (eq $stepResult.Status 0) }}card-primary{{ end }} {{ if (eq $stepResult.Status 1) }}card-danger{{ end }} {{ if (eq $stepResult.Status 2) }}card-success{{ end }}">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-shoe-prints"></i> {{ $stepResult.Name }}</h3>
+                    </div>
+                    <div class="card-body text-left">
+                        {{ if (eq $stepResult.Status 0) }}
+                            <pre class="card-text text-info"> In process... </pre>
+                        {{ end }}
 
-                                    <pre class="card-text text-info"> In process... </pre>
-                                {{ end }}
+                        {{if $stepResult.StdOut }}
+                            <pre class="card-text text-info">{{ $stepResult.StdOut }}</pre>
+                        {{end}}
 
-                                {{if $stepResult.StdOut }}
-                                    <pre class="card-text text-info">{{ $stepResult.StdOut }}</pre>
-                                {{end}}
+                        {{if $stepResult.StdErr }}
+                            <pre class="card-text text-warning">{{ $stepResult.StdErr }}</pre>
+                        {{end}}
 
-                                {{if $stepResult.StdErr }}
-                                    <pre class="card-text text-warning">{{ $stepResult.StdErr }}</pre>
-                                {{end}}
-
-                                {{if $stepResult.Error }}
-                                    <pre class="card-text text-danger">{{ $stepResult.Error }}</pre>
-                                {{end}}
-                            </div>
-                        </div>
-                        <br>
-                    {{ end }}
+                        {{if $stepResult.Error }}
+                            <pre class="card-text text-danger">{{ $stepResult.Error }}</pre>
+                        {{end}}
+                    </div>
                 </div>
-            </ul>
-            <div class="card-footer text-muted">
-                <a href="/projects/list" class="btn btn-sm btn-primary">Ok</a>
-                <a href="/builds/run?projectId={{ .Content.Project.Id }}" class="btn btn-sm btn-primary {{ if (lt .Content.Project.Status 3) }} disabled {{ end }}">Rerun</a>
-            </div>
+            {{ end }}
+        </div>
+        <div class="card-footer">
+            <a href="/builds/run?projectId={{ .Content.Project.Id }}" class="btn btn-sm btn-primary {{ if (lt .Content.Project.Status 3) }} disabled {{ end }}">
+                <i class="fas fa-redo-alt"></i> Повторить
+            </a>
+            <a href="/projects/list" class="btn btn-sm btn-primary float-right">Ok</a>
         </div>
     </div>
-    <br>
-    <br>
-    <br>
-
-    {{ if (eq .Content.Build.Status 0)}}
-        <script>
-            setTimeout(function() {
-                location.reload();
-            }, 500);
-        </script>
-    {{ end }}
+</div>
+<br>
+<br>
+<br>
 {{end}}

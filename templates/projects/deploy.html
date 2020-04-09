@@ -1,35 +1,54 @@
 {{define "content"}}
     <div class="col col-sm-8 offset-2">
-        <section class="content-header text-center">
-            <h1>SSH ключи для VCS системы проекта &laquo;{{ .Content.Project.Name }}&raquo;</h1>
-        </section>
-        {{if .Content.Message }}
-            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
-        {{end}}
-        <br>
-        <form action="/projects/deploy?projectId={{ .Content.Project.Id }}" method="post">
-            <div class="form-group">
-                <label for="exampleFormControlTextarea1">Имя SSH ключа</label>
-                <input type="text" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}" required/>
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-key"></i> SSH ключи для VCS системы проекта &laquo;{{ .Content.Project.Name }}&raquo;</h3>
             </div>
-            <div class="form-group">
-                <label for="exampleFormControlTextarea1">Публичный ключ</label>
-                <textarea name="public_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="exampleFormControlTextarea1">Приватный ключ</label>
-                <textarea name="private_key" class="form-control" id="exampleFormControlTextarea1" rows="6"></textarea>
-            </div>
-            <div class="form-group">
-                <button type="submit" name="isNeedGenerated" class="btn btn-flat btn-success btn-sm float-right" value="false">
-                    <i class="fas fa-save"></i>
-                    Сохранить ключи
-                </button>
-                <button type="submit" name="isNeedGenerated" class="btn btn-flat btn-primary btn-sm float-left" value="true">
-                    <i class="fas fa-key"></i>
-                    Сгенерировать ключ автоматически
-                </button>
-            </div>
-        </form>
+            <form role="form" action="/projects/deploy?projectId={{ .Content.Project.Id }}" method="post">
+                <div class="card-body">
+                    {{if .Content.Message}}
+                        <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+                    {{end}}
+
+                    <div class="form-group">
+                        <label for="title">Имя SSH ключа</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-comment-dots"></i></span>
+                            </div>
+                            <input type="text" id="title" name="title_key" class="form-control" value="Bicycle-Ci-key-{{ .Content.Project.Id }}" required/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="public">Публичный ключ</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            </div>
+                            <textarea name="public_key" id="public" class="form-control" rows="6"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="private">Приватный ключ</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
+                            </div>
+                            <textarea name="private_key" id="private" class="form-control" rows="6"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" name="isNeedGenerated" class="btn btn-success btn-sm float-right" value="false">
+                        <i class="fas fa-save"></i> Сохранить ключи
+                    </button>
+                    <button type="submit" name="isNeedGenerated" class="btn btn-primary btn-sm float-left" value="true">
+                        <i class="fas fa-key"></i> Сгенерировать ключ автоматически
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 {{end}}

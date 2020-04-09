@@ -1,22 +1,23 @@
 {{define "content"}}
     <div class="col col-sm-10 offset-1">
-        <section class="content-header">
-            <h1>VCS триггеры проекта &laquo;{{ .Content.Project.Name }}&raquo;
-                <a href="/hooks/create?projectId={{ .Content.Project.Id }}" class="btn btn-flat btn-success btn-sm float-right">
-                    <i class="fas fa-plus"></i>
-                    Создать VCS триггер
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-bell"></i> Список проектов</h3>
+                <a href="/hooks/create?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i> Создать VCS триггер
                 </a>
-            </h1>
-        </section>
+            </div>
 
-        <div class="box-body">
-            <table class="table table-bordered">
-                <tbody>
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
                     <tr>
                         <th style="width: 10px">#</th>
                         <th>VCS событие</th>
                         <th>Целевая ветка</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     {{ range $key, $hook := .Content.Hooks }}
                         <tr>
                             <th scope="row">{{ $hook.Id }}</th>
@@ -24,8 +25,9 @@
                             <td>{{ $hook.Branch }}</td>
                         </tr>
                     {{ end }}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {{end}}

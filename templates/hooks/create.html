@@ -1,34 +1,28 @@
 {{define "content"}}
-    <br>
-    <br>
-    <br>
     <div class="col col-sm-6 offset-3">
-        <section class="content-header">
-            <h1 class="text-center">VCS триггер</h1>
-        </section>
-
-        <div class="box-body">
-            {{if .Content.Message}}
-                <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
-            {{end}}
-
-            <form action="/hooks/create?projectId={{ .Content.Project.Id }}" method="post">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="branch" name="branch" placeholder="Целевая ветка" required>
-                </div>
-                <div class="row">
-{{/*                    <div class="col col-sm-9">*/}}
-{{/*                        <button type="submit" name="delete" value="true" class="btn btn-flat btn-success col-sm-12">*/}}
-{{/*                            <i class="fas fa-save"></i>*/}}
-{{/*                            Сохранить*/}}
-{{/*                        </button>*/}}
-{{/*                    </div>*/}}
-                    <div class="col col-sm-3 offset-9">
-                        <button type="submit" name="delete" value="false" class="btn btn-flat btn-success col-sm-12">
-                            <i class="fas fa-save"></i>
-                            Сохранить
-                        </button>
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-bell"></i> VCS триггер</h3>
+            </div>
+            <form role="form" action="/hooks/create?projectId={{ .Content.Project.Id }}" method="post">
+                <div class="card-body">
+                    {{if .Content.Message}}
+                        <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+                    {{end}}
+                    <div class="form-group">
+                        <label for="branch">Целевая ветка</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-code-branch"></i></span>
+                            </div>
+                            <input type="text" class="form-control" id="branch" name="branch" placeholder="master" required>
+                        </div>
                     </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" name="delete" value="false" class="btn btn-success col-sm-12">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
                 </div>
             </form>
         </div>

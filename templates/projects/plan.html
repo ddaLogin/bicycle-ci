@@ -1,92 +1,94 @@
 {{define "content"}}
     <div class="col col-sm-8 offset-2">
-        <section class="content-header text-center">
-            <h1>План сборки проекта &laquo;{{ .Content.Project.Name }}&raquo;</h1>
-        </section>
-
-        {{if .Content.Message}}
-            <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
-        {{end}}
-
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-cloud-download-alt"></i> Клонирование проекта</h3>
+                <h3 class="card-title">
+                    <i class="fas fa-cogs"></i> План сборки проекта &laquo;{{ .Content.Project.Name }}&raquo;
+                </h3>
             </div>
-            <div class="card-body text-center">
-                Проект будет автоматически клонирован с вашего репозитория
-            </div>
+            <form class="form-horizontal" action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
+                <div class="card-body text-center">
+                    {{if .Content.Message}}
+                        <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+                    {{end}}
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-cloud-download-alt"></i> Клонирование проекта</h3>
+                        </div>
+                        <div class="card-body text-center">
+                            Проект будет автоматически клонирован с вашего репозитория
+                        </div>
+                    </div>
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-archive"></i> Сборка проекта</h3>
+                        </div>
+                        <form role="form">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="plan">
+                                        <i class="fas fa-scroll"></i> Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
+                                    </label>
+                                    <textarea name="plan" class="form-control" id="plan" rows="6" required>{{ if .Content.Project.BuildPlan }}{{ .Content.Project.BuildPlan }}{{ end }}</textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-cloud-upload-alt"></i> Развертывание проекта</h3>
+                        </div>
+                        <form role="form">
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="artifact">
+                                        Укажите локальный путь относительно проекта, к директории которую необходимо развернуть.
+                                        <br>
+                                        Оставить пустым для копирования всего проекта
+                                    </label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                                        </div>
+                                        <input type="text" id="artifact" name="artifact_dir" class="form-control" value="{{ if .Content.Project.ArtifactDir }}{{ .Content.Project.ArtifactDir }}{{ end }}"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="server">Укажите целевой сервер для развертывания</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-server"></i></span>
+                                        </div>
+                                        <select class="form-control" id="server" name="server_id">
+                                            <option value="0">Локально (относительно системы сборки)</option>
+                                            {{ range $key, $server := .Content.Servers }}
+                                                <option value="{{ $server.Id }}">{{ $server.Name }}</option>
+                                            {{ end }}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="server">Укажите абсолютный путь к директории развертывания</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                                        </div>
+                                        <input type="text" id="deployDir" name="deploy_dir" class="form-control" value="{{ if .Content.Project.DeployDir }}{{ .Content.Project.DeployDir }}{{ end }}" required/>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success col-sm-12">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <form class="form-horizontal" action="/projects/plan?projectId={{ .Content.Project.Id }}" method="post">
-            <div class="card card-primary">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-archive"></i> Сборка проекта</h3>
-                </div>
-                <form role="form">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label for="plan">
-                                <i class="fas fa-scroll"></i> Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
-                            </label>
-                            <textarea name="plan" class="form-control" id="plan" rows="6" required>{{ if .Content.Project.BuildPlan }}{{ .Content.Project.BuildPlan }}{{ end }}</textarea>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="card card-primary">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-cloud-upload-alt"></i> Развертывание проекта</h3>
-                </div>
-                <form role="form">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label for="artifact">
-                                 Укажите локальный путь относительно проекта, к директории которую необходимо развернуть.
-                                <br>
-                                Оставить пустым для копирования всего проекта
-                            </label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-folder"></i></span>
-                                </div>
-                                <input type="text" id="artifact" name="artifact_dir" class="form-control" value="{{ if .Content.Project.ArtifactDir }}{{ .Content.Project.ArtifactDir }}{{ end }}"/>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="server">Укажите целевой сервер для развертывания</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-server"></i></span>
-                                </div>
-                                <select class="form-control" id="server" name="server_id">
-                                    <option value="0">Локально (относительно системы сборки)</option>
-                                    {{ range $key, $server := .Content.Servers }}
-                                        <option value="{{ $server.Id }}">{{ $server.Name }}</option>
-                                    {{ end }}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="server">Укажите абсолютный путь к директории развертывания</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-folder"></i></span>
-                                </div>
-                                <input type="text" id="deployDir" name="deploy_dir" class="form-control" value="{{ if .Content.Project.DeployDir }}{{ .Content.Project.DeployDir }}{{ end }}" required/>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <div class="form-group">
-                <button type="button" class="btn btn-primary float-right">
-                    <i class="fas fa-save"></i> Сохранить
-                </button>
-            </div>
-            <br>
-            <br>
-            <br>
-        </form>
     </div>
+    <br>
+    <br>
+    <br>
 {{end}}
