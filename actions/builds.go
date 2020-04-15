@@ -118,20 +118,23 @@ func process(project models.Project, build models.Build) {
 		buildStep.Save()
 	}
 
-	deployStep := models.Step{
-		BuildId: build.Id,
-		Name:    "Deploy project",
-		Status:  models.STEP_STATUS_RUNING,
-	}
-	deployStep.Save()
+	var deployStep models.Step
+	if buildStep.Error == "" {
+		deployStep = models.Step{
+			BuildId: build.Id,
+			Name:    "Deploy project",
+			Status:  models.STEP_STATUS_RUNING,
+		}
+		deployStep.Save()
 
-	if *project.ServerId == 0 || project.ServerId == nil {
-		worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
-	} else {
-		worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy_remote.sh"), &deployStep)
-	}
+		if *project.ServerId == 0 || project.ServerId == nil {
+			worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
+		} else {
+			worker.RunStep(project, exec.Command("bash", "./worker/scripts/deploy_remote.sh"), &deployStep)
+		}
 
-	deployStep.Save()
+		deployStep.Save()
+	}
 
 	cleanStep := models.Step{
 		BuildId: build.Id,
@@ -142,7 +145,7 @@ func process(project models.Project, build models.Build) {
 	worker.RunStep(project, exec.Command("bash", "./worker/scripts/clear.sh"), &cleanStep)
 	cleanStep.Save()
 
-	if cloneStep.Status == models.STEP_STATUS_SUCCESS && buildStep.Status == models.STEP_STATUS_SUCCESS && cleanStep.Status == models.STEP_STATUS_SUCCESS {
+	if cloneStep.Status == models.STEP_STATUS_SUCCESS && buildStep.Status == models.STEP_STATUS_SUCCESS && cleanStep.Status == models.STEP_STATUS_SUCCESS && deployStep.Status == models.STEP_STATUS_SUCCESS {
 		build.Status = models.STATUS_SUCCESS
 	} else {
 		build.Status = models.STATUS_FAILED
