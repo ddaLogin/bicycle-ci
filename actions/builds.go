@@ -113,7 +113,7 @@ func process(project models.Project, build models.Build) {
 		buildStep.Save()
 		reg := regexp.MustCompile("\r\n")
 		plan := reg.ReplaceAllString(*project.BuildPlan, " ")
-		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v "+dir+"/builds/project-"+strconv.Itoa(int(project.Id))+":/app node-bci sh /build.sh '"+plan+"'")
+		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v "+dir+"/builds/project-"+strconv.Itoa(int(project.Id))+":/app "+project.Image().Name+" sh /build.sh '"+plan+"'")
 		worker.RunStep(project, buildCmd, &buildStep)
 		buildStep.Save()
 	}

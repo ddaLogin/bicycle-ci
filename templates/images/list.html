@@ -1,0 +1,41 @@
+{{define "content"}}
+    <div class="col col-sm-10 offset-1">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-toolbox"></i> Список Docker образов</h3>
+                <a href="/docker/images/create" class="btn btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i> Создать Docker образ
+                </a>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th style="width: 10px">#</th>
+                        <th>Имя образа</th>
+                        <th>Описание</th>
+                        <th>Пользователь</th>
+                        <th>Действие</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range $key, $image := .Content.Images }}
+                        <tr>
+                            <th scope="row">{{ $image.Id }}</th>
+                            <td>{{ $image.Name }}</td>
+                            <td>{{ $image.Description }}</td>
+                            <td>{{ $image.User.Login }}</td>
+                            <td>
+                                <a href="/docker/images/create?imageId={{ $image.Id }}" class="btn btn-primary btn-xs">
+                                    <i class="fas fa-pencil-alt"></i> Редактировать
+                                </a>
+                            </td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{{end}}

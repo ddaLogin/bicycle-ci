@@ -21,6 +21,17 @@ create table users
 )
     comment 'Пользователи';
 
+create table images
+(
+    id          int auto_increment
+        primary key,
+    name        varchar(150) not null,
+    description varchar(150) null,
+    user_id     int          not null,
+    constraint containers_users_id_fk
+        foreign key (user_id) references users (id)
+);
+
 create table providers
 (
     id                     int auto_increment
@@ -50,6 +61,7 @@ create table projects
     repo_owner_id   varchar(255) not null,
     deploy_key_id   int          null,
     deploy_private  text         null,
+    build_image     int          null,
     build_plan      text         null,
     artifact_dir    varchar(250) null,
     server_id       int          null,
@@ -102,4 +114,3 @@ create table steps
     constraint steps_builds_id_fk
         foreign key (build_id) references builds (id)
 );
-

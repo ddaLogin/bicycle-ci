@@ -65,6 +65,7 @@ func startServer(cfg Config) {
 	actions.ProviderRoutes()
 	actions.BuildsRoutes()
 	actions.ServerRoutes()
+	actions.ImagesRoutes()
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))

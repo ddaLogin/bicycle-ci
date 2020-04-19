@@ -166,6 +166,7 @@ func GetBuildsWithProjects() (builds []Build) {
 			&project.RepoOwnerId,
 			&project.DeployKeyId,
 			&project.DeployPrivate,
+			&project.BuildImage,
 			&project.BuildPlan,
 			&project.ArtifactDir,
 			&project.ServerId,

@@ -31,6 +31,7 @@ type ProjectDeployPage struct {
 type ProjectPlanPage struct {
 	Project models.Project
 	Servers []models.Server
+	Images  []models.Image
 	Message string
 }
 
@@ -166,6 +167,7 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	servers := models.GetAllServers()
+	images := models.GetImages()
 	message := ""
 
 	if (models.Project{}) == project && project.UserId != user.Id {
@@ -177,17 +179,20 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 		plan := req.FormValue("plan")
 		deployDir := req.FormValue("deploy_dir")
 		artifactDir := req.FormValue("artifact_dir")
+		imageId := req.FormValue("build_image")
 		serverId := req.FormValue("server_id")
 
 		reg := regexp.MustCompile("[^/A-z0-9]+")
 
 		if !reg.MatchString(deployDir) && (!reg.MatchString(artifactDir) || artifactDir == "") {
 
+			buff, _ := strconv.Atoi(imageId)
+			project.BuildImage = &buff
 			project.BuildPlan = &plan
 			project.DeployDir = &deployDir
 			project.ArtifactDir = &artifactDir
-			buff, _ := strconv.Atoi(serverId)
-			project.ServerId = &buff
+			buff2, _ := strconv.Atoi(serverId)
+			project.ServerId = &buff2
 
 			if project.Save() {
 				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
@@ -202,6 +207,7 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 	templates.Render(w, "templates/projects/plan.html", ProjectPlanPage{
 		Project: project,
 		Servers: servers,
+		Images:  images,
 		Message: message,
 	}, user)
 }
