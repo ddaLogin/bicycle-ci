@@ -182,7 +182,7 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 		imageId := req.FormValue("build_image")
 		serverId := req.FormValue("server_id")
 
-		reg := regexp.MustCompile("[^/A-z0-9]+")
+		reg := regexp.MustCompile("[/A-z0-9]+")
 
 		if !reg.MatchString(deployDir) && (!reg.MatchString(artifactDir) || artifactDir == "") {
 
