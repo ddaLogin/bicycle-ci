@@ -7,7 +7,6 @@ import (
 	"github.com/ddalogin/bicycle-ci/ssh"
 	"github.com/ddalogin/bicycle-ci/templates"
 	"net/http"
-	"regexp"
 	"strconv"
 )
 
@@ -182,25 +181,18 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 		imageId := req.FormValue("build_image")
 		serverId := req.FormValue("server_id")
 
-		reg := regexp.MustCompile("[/A-z0-9]+")
+		buff, _ := strconv.Atoi(imageId)
+		project.BuildImage = &buff
+		project.BuildPlan = &plan
+		project.DeployDir = &deployDir
+		project.ArtifactDir = &artifactDir
+		buff2, _ := strconv.Atoi(serverId)
+		project.ServerId = &buff2
 
-		if !reg.MatchString(deployDir) && (!reg.MatchString(artifactDir) || artifactDir == "") {
-
-			buff, _ := strconv.Atoi(imageId)
-			project.BuildImage = &buff
-			project.BuildPlan = &plan
-			project.DeployDir = &deployDir
-			project.ArtifactDir = &artifactDir
-			buff2, _ := strconv.Atoi(serverId)
-			project.ServerId = &buff2
-
-			if project.Save() {
-				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
-			} else {
-				message = "Can't save build plan. Please try again"
-			}
+		if project.Save() {
+			http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
 		} else {
-			message = "Deploy and Artifact dir must be a correct absolute path"
+			message = "Can't save build plan. Please try again"
 		}
 	}
 
