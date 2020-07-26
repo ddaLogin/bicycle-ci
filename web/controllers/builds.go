@@ -4,25 +4,21 @@ import (
 	"fmt"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
-	"github.com/ddalogin/bicycle-ci/telegram"
 	"github.com/ddalogin/bicycle-ci/web/templates"
 	"github.com/ddalogin/bicycle-ci/worker"
 	"net/http"
-	"os"
-	"os/exec"
-	"regexp"
 	"strconv"
-	"time"
 )
 
 // Контроллер сборок
 type BuildsController struct {
-	auth *auth.Service
+	auth          *auth.Service
+	workerService *worker.Service
 }
 
 // Конструктор контроллера сборок
-func NewBuildsController(auth *auth.Service) *BuildsController {
-	return &BuildsController{auth: auth}
+func NewBuildsController(auth *auth.Service, workerService *worker.Service) *BuildsController {
+	return &BuildsController{auth: auth, workerService: workerService}
 }
 
 // Шаблон страницы сборки
@@ -42,7 +38,7 @@ func (c *BuildsController) Run(w http.ResponseWriter, req *http.Request, user mo
 		return
 	}
 
-	build := RunProcess(project, HookPayload{})
+	build := c.workerService.RunBuild(project, nil)
 
 	http.Redirect(w, req, "/builds/status?buildId="+fmt.Sprintf("%v", build.Id), http.StatusSeeOther)
 }

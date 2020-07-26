@@ -3,8 +3,8 @@ package web
 import (
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/ssh"
-	"github.com/ddalogin/bicycle-ci/telegram"
 	"github.com/ddalogin/bicycle-ci/web/controllers"
+	"github.com/ddalogin/bicycle-ci/worker"
 	"log"
 	"net/http"
 )
@@ -17,15 +17,15 @@ type Config struct {
 
 // Http сервер
 type Server struct {
-	config          Config
-	authService     *auth.Service
-	sshService      *ssh.Service
-	telegramService *telegram.Service
+	config        Config
+	authService   *auth.Service
+	sshService    *ssh.Service
+	workerService *worker.Service
 }
 
 // Конструктор http сервера
-func NewServer(config Config, authService *auth.Service, sshService *ssh.Service, telegramService *telegram.Service) *Server {
-	return &Server{config: config, authService: authService, sshService: sshService, telegramService: telegramService}
+func NewServer(config Config, authService *auth.Service, sshService *ssh.Service, workerService *worker.Service) *Server {
+	return &Server{config: config, authService: authService, sshService: sshService, workerService: workerService}
 }
 
 // Запуск сервера
@@ -66,12 +66,12 @@ func (s *Server) route() {
 	http.Handle("/vcs/list", s.authService.AuthMiddleware(vscC.List))
 	http.Handle("/vcs/callback", s.authService.AuthMiddleware(vscC.OAuthCallback))
 
-	hookC := controllers.NewHookController(s.authService)
+	hookC := controllers.NewHookController(s.authService, s.workerService)
 	http.Handle("/hooks/list", s.authService.AuthMiddleware(hookC.List))
 	http.Handle("/hooks/create", s.authService.AuthMiddleware(hookC.Create))
 	http.Handle("/hooks/trigger", http.HandlerFunc(hookC.Trigger))
 
-	buildC := controllers.NewBuildsController(s.authService)
+	buildC := controllers.NewBuildsController(s.authService, s.workerService)
 	http.Handle("/builds/run", s.authService.AuthMiddleware(buildC.Run))
 	http.Handle("/builds/status", s.authService.AuthMiddleware(buildC.Status))
 }

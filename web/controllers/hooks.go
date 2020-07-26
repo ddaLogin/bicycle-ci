@@ -6,6 +6,7 @@ import (
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/vcs"
 	"github.com/ddalogin/bicycle-ci/web/templates"
+	"github.com/ddalogin/bicycle-ci/worker"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,12 +15,13 @@ import (
 
 // Контроллер vcs web хуков
 type HookController struct {
-	auth *auth.Service
+	auth          *auth.Service
+	workerService *worker.Service
 }
 
 // Конструктор контроллера vcs web хуков
-func NewHookController(auth *auth.Service) *HookController {
-	return &HookController{auth: auth}
+func NewHookController(auth *auth.Service, workerService *worker.Service) *HookController {
+	return &HookController{auth: auth, workerService: workerService}
 }
 
 // Мдель хука получаемого от гитхаба
@@ -137,7 +139,15 @@ func (c *HookController) Trigger(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			//RunProcess(project, payload)
+			var commits []string
+
+			if payload.Ref != "" {
+				for _, commit := range payload.Commits {
+					commits = append(commits, commit.Message)
+				}
+			}
+
+			c.workerService.RunBuild(project, commits)
 
 			w.WriteHeader(200)
 			return

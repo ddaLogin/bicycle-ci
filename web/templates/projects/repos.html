@@ -19,7 +19,7 @@
                             <td>{{ $project.Name }}</td>
                             <td>
                                 {{ if not $project.Status }}
-                                    <a href="/projects/enable?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}"
+                                    <a href="/projects/create?providerId={{ $project.Provider }}&repoName={{ $project.RepoName }}&repoOwner={{ $project.RepoOwnerName }}"
                                        class="btn btn-primary btn-sm">
                                         <i class="fas fa-folder-plus"></i> Создать проект
                                     </a>

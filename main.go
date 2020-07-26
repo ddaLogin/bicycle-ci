@@ -9,6 +9,7 @@ import (
 	"github.com/ddalogin/bicycle-ci/telegram"
 	"github.com/ddalogin/bicycle-ci/vcs/github"
 	"github.com/ddalogin/bicycle-ci/web"
+	"github.com/ddalogin/bicycle-ci/worker"
 	"io"
 	"log"
 	"os"
@@ -46,7 +47,8 @@ func main() {
 	authService := auth.NewService(config.SessionName, config.SessionSecretKey, "/login")
 	sshService := ssh.NewService()
 	telegramService := telegram.NewService(config.Telegram)
+	workerService := worker.NewService(telegramService, config.Web.Host, config.Web.Port)
 
-	server := web.NewServer(config.Web, authService, sshService, telegramService)
+	server := web.NewServer(config.Web, authService, sshService, workerService)
 	server.Run()
 }
