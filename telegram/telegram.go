@@ -21,20 +21,23 @@ type Response struct {
 	Status   int
 }
 
-var config Config
+// Сервис для работы с Telegram
+type Service struct {
+	config Config
+}
 
-// Установить конфиг
-func SetConfig(cfg Config) {
-	config = cfg
+// Конструктор telegram сервиса
+func NewService(config Config) *Service {
+	return &Service{config: config}
 }
 
 // Отправить сообщение в чат
-func SendMessage(message string) {
-	url := config.Host + "/bot" + config.Token + "/sendMessage"
-	query := []byte(`{"chat_id": "` + config.ChatId + `", "text": "` + message + `", "parse_mode": "Markdown"}`)
+func (s *Service) SendMessage(message string) {
+	url := s.config.Host + "/bot" + s.config.Token + "/sendMessage"
+	query := []byte(`{"chat_id": "` + s.config.ChatId + `", "text": "` + message + `", "parse_mode": "Markdown"}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(query))
 	if err != nil {
-		log.Fatal("Error send telegram message. ", err)
+		log.Fatal("Ошибка при отправке сообщения в Telegram. ", err)
 		return
 	}
 
@@ -43,10 +46,9 @@ func SendMessage(message string) {
 
 	client := &http.Client{Timeout: time.Second * 10}
 
-	// Send request
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("Error response reading from telegram. ", err)
+		log.Fatal("Ошибка при чтение ответа от Telegram. ", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -57,7 +59,7 @@ func SendMessage(message string) {
 	response.Status = resp.StatusCode
 	response.Response, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("Error body reading from telegram. ", err)
+		log.Fatal("Ошибка при чтение тела ответа от Telegram. ", err)
 		return
 	}
 

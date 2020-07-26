@@ -22,7 +22,7 @@
                                 <th scope="row">{{ $build.Id }}</th>
                                 <td>{{ $build.Project.Name }}</td>
                                 <td>
-                                    <a href="/builds/watch?buildId={{ $build.Id }}">
+                                    <a href="/builds/status?buildId={{ $build.Id }}">
                                         <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>
                                     </a>
                                 </td>

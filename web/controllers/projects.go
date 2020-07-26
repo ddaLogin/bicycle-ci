@@ -1,14 +1,25 @@
-package actions
+package controllers
 
 import (
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
-	"github.com/ddalogin/bicycle-ci/providers"
 	"github.com/ddalogin/bicycle-ci/ssh"
-	"github.com/ddalogin/bicycle-ci/templates"
+	"github.com/ddalogin/bicycle-ci/vcs"
+	"github.com/ddalogin/bicycle-ci/web/templates"
 	"net/http"
 	"strconv"
 )
+
+// Контроллер проектов
+type ProjectController struct {
+	auth *auth.Service
+	ssh  *ssh.Service
+}
+
+//Констрктор контроллера проектов
+func NewProjectController(auth *auth.Service, ssh *ssh.Service) *ProjectController {
+	return &ProjectController{auth: auth, ssh: ssh}
+}
 
 // Страница списка проектов
 type ProjectListPage struct {
@@ -34,24 +45,15 @@ type ProjectPlanPage struct {
 	Message string
 }
 
-// Регистрация роутов по проектам
-func ProjectRoutes() {
-	http.Handle("/projects/list", auth.RequireAuthentication(projectsList))
-	http.Handle("/projects/choose", auth.RequireAuthentication(projectsChoose))
-	http.Handle("/projects/enable", auth.RequireAuthentication(projectsEnable))
-	http.Handle("/projects/deploy", auth.RequireAuthentication(projectsDeploy))
-	http.Handle("/projects/plan", auth.RequireAuthentication(projectsPlan))
-}
-
 // Страница проектов пользователя
-func projectsList(w http.ResponseWriter, req *http.Request, user models.User) {
-	templates.Render(w, "templates/projects/list.html", ProjectListPage{
+func (c *ProjectController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+	templates.Render(w, "web/templates/projects/list.html", ProjectListPage{
 		Projects: models.GetProjectsByUserId(user.Id),
 	}, user)
 }
 
 // Страница выбора репозитория для нового проекта
-func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user models.User) {
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
 
 	if (models.ProviderData{}) == providerData && providerData.UserId != user.Id {
@@ -59,7 +61,7 @@ func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) 
 		return
 	}
 
-	provider := providers.GetProviderByType(providerData.ProviderType)
+	provider := vcs.GetProviderByType(providerData.ProviderType)
 
 	if provider == nil {
 		http.NotFound(w, req)
@@ -75,13 +77,13 @@ func projectsChoose(w http.ResponseWriter, req *http.Request, user models.User) 
 		}
 	}
 
-	templates.Render(w, "templates/projects/choose.html", ProjectEnablePage{
+	templates.Render(w, "web/templates/projects/repos.html", ProjectEnablePage{
 		ProjectsToEnable: projectsToEnable,
 	}, user)
 }
 
 // Активация проекта на основе репозитория
-func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	repoName := req.URL.Query().Get("repoName")
 	repoOwner := req.URL.Query().Get("repoOwner")
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
@@ -91,7 +93,7 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 		return
 	}
 
-	provider := providers.GetProviderByType(providerData.ProviderType)
+	provider := vcs.GetProviderByType(providerData.ProviderType)
 
 	if provider == nil {
 		http.NotFound(w, req)
@@ -107,7 +109,7 @@ func projectsEnable(w http.ResponseWriter, req *http.Request, user models.User) 
 }
 
 // Настройка ключей деплоя
-func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	message := ""
@@ -123,7 +125,7 @@ func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) 
 		privateKey := req.FormValue("private_key")
 		titleKey := req.FormValue("title_key")
 		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
-		provider := providers.GetProviderByType(providerData.ProviderType)
+		provider := vcs.GetProviderByType(providerData.ProviderType)
 
 		if provider == nil || providerData == (models.ProviderData{}) {
 			http.NotFound(w, req)
@@ -134,7 +136,7 @@ func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) 
 
 		// Автоматически генерируем SSH ключи
 		if "true" == isGenerate {
-			pair := ssh.GenerateKeyPair()
+			pair := c.ssh.GenerateKeyPair()
 			publicKey = string(pair.Public)
 			privateKey = string(pair.Private)
 		}
@@ -148,21 +150,21 @@ func projectsDeploy(w http.ResponseWriter, req *http.Request, user models.User) 
 			if project.Save() {
 				http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
 			} else {
-				message = "Can't save project with deploy key. Please try again"
+				message = "Не удалось сохранить деплой ключи. Пожалуйста попробуй позже."
 			}
 		} else {
-			message = "Can't upload deployment key. Please try again"
+			message = "Не удалось загрузить деплой ключи. Пожалуйста попробуйте позже."
 		}
 	}
 
-	templates.Render(w, "templates/projects/deploy.html", ProjectDeployPage{
+	templates.Render(w, "web/templates/projects/deploy.html", ProjectDeployPage{
 		Project: project,
 		Message: message,
 	}, user)
 }
 
 // Редактирование плана сборки
-func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Plan(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	servers := models.GetAllServers()
@@ -186,17 +188,18 @@ func projectsPlan(w http.ResponseWriter, req *http.Request, user models.User) {
 		project.BuildPlan = &plan
 		project.DeployDir = &deployDir
 		project.ArtifactDir = &artifactDir
+
 		buff2, _ := strconv.Atoi(serverId)
 		project.ServerId = &buff2
 
 		if project.Save() {
 			http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
 		} else {
-			message = "Can't save build plan. Please try again"
+			message = "Не удалось сохранить план сборки. Пожалуйста попробуйте позже."
 		}
 	}
 
-	templates.Render(w, "templates/projects/plan.html", ProjectPlanPage{
+	templates.Render(w, "web/templates/projects/plan.html", ProjectPlanPage{
 		Project: project,
 		Servers: servers,
 		Images:  images,

@@ -15,22 +15,29 @@ type KeyPair struct {
 	Public  []byte
 }
 
+// Ssh сервис
+type Service struct{}
+
+// Конструктор ssh сервиса
+func NewService() *Service {
+	return &Service{}
+}
+
 // Генерация пары ssh включей
-func GenerateKeyPair() (pair KeyPair) {
+func (s *Service) GenerateKeyPair() (pair KeyPair) {
 	bitSize := 4096
 
-	privateKey, err := generatePrivateKey(bitSize)
+	privateKey, err := s.generatePrivateKey(bitSize)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	publicKeyBytes, err := generatePublicKey(&privateKey.PublicKey)
+	publicKeyBytes, err := s.generatePublicKey(&privateKey.PublicKey)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	privateKeyBytes := encodePrivateKeyToPEM(privateKey)
-
+	privateKeyBytes := s.encodePrivateKeyToPEM(privateKey)
 	pair.Private = privateKeyBytes
 	pair.Public = publicKeyBytes
 
@@ -38,7 +45,7 @@ func GenerateKeyPair() (pair KeyPair) {
 }
 
 // generatePrivateKey creates a RSA Private Key of specified byte size
-func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
+func (s *Service) generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 	// Private Key generation
 	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
@@ -55,7 +62,7 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 }
 
 // encodePrivateKeyToPEM encodes Private Key from RSA to PEM format
-func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
+func (s *Service) encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	// Get ASN.1 DER format
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
 
@@ -74,7 +81,7 @@ func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 
 // generatePublicKey take a rsa.PublicKey and return bytes suitable for writing to .pub file
 // returns in the format "ssh-rsa ..."
-func generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
+func (s *Service) generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	publicRsaKey, err := ssh.NewPublicKey(privatekey)
 	if err != nil {
 		return nil, err

@@ -1,13 +1,24 @@
-package actions
+package controllers
 
 import (
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/ssh"
-	"github.com/ddalogin/bicycle-ci/templates"
+	"github.com/ddalogin/bicycle-ci/web/templates"
 	"net/http"
 	"strconv"
 )
+
+// Контроллер удаленных серверов
+type ServerController struct {
+	auth *auth.Service
+	ssh  *ssh.Service
+}
+
+// Конструктор контроллера удаленных сверверов
+func NewServerController(auth *auth.Service, ssh *ssh.Service) *ServerController {
+	return &ServerController{auth: auth, ssh: ssh}
+}
 
 // Страница списка серверов
 type ServersListPage struct {
@@ -21,22 +32,16 @@ type ServerCreatePage struct {
 	Message string
 }
 
-// Регистрация роутов по серверам
-func ServerRoutes() {
-	http.Handle("/servers/list", auth.RequireAuthentication(serverList))
-	http.Handle("/servers/create", auth.RequireAuthentication(serverCreate))
-}
-
 // Страница серверов
-func serverList(w http.ResponseWriter, req *http.Request, user models.User) {
-	templates.Render(w, "templates/servers/list.html", ServersListPage{
+func (c *ServerController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+	templates.Render(w, "web/templates/servers/list.html", ServersListPage{
 		Servers: models.GetAllServers(),
 		Message: "",
 	}, user)
 }
 
 // Страница создание сервера
-func serverCreate(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ServerController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	serverId := req.URL.Query().Get("serverId")
 	buf, _ := strconv.Atoi(serverId)
 	server := models.GetServerById(buf)
@@ -58,7 +63,7 @@ func serverCreate(w http.ResponseWriter, req *http.Request, user models.User) {
 
 		// Автоматически генерируем SSH ключи
 		if "true" == isGenerate {
-			pair := ssh.GenerateKeyPair()
+			pair := c.ssh.GenerateKeyPair()
 			server.DeployPublic = string(pair.Public)
 			server.DeployPrivate = string(pair.Private)
 		}
@@ -66,11 +71,11 @@ func serverCreate(w http.ResponseWriter, req *http.Request, user models.User) {
 		if server.Save() {
 			http.Redirect(w, req, "/servers/list", http.StatusSeeOther)
 		} else {
-			message = "Can't save server. Please try again"
+			message = "Не удалось сохранить сервер. Пожалуйста попробуйте позже."
 		}
 	}
 
-	templates.Render(w, "templates/servers/create.html", ServerCreatePage{
+	templates.Render(w, "web/templates/servers/create.html", ServerCreatePage{
 		Server:  server,
 		Message: message,
 	}, user)

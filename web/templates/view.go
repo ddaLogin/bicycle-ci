@@ -19,7 +19,7 @@ func Render(w http.ResponseWriter, templateFile string, data interface{}, user m
 		Content: data,
 	}
 
-	view, _ := template.New("").ParseFiles(templateFile, "templates/base.html")
+	view, _ := template.New("").ParseFiles(templateFile, "web/templates/base.html")
 
 	view.ExecuteTemplate(w, "base", base)
 }

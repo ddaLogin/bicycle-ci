@@ -1,16 +1,26 @@
-package actions
+package controllers
 
 import (
 	"encoding/json"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
-	"github.com/ddalogin/bicycle-ci/providers"
-	"github.com/ddalogin/bicycle-ci/templates"
+	"github.com/ddalogin/bicycle-ci/vcs"
+	"github.com/ddalogin/bicycle-ci/web/templates"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
+
+// Контроллер vcs web хуков
+type HookController struct {
+	auth *auth.Service
+}
+
+// Конструктор контроллера vcs web хуков
+func NewHookController(auth *auth.Service) *HookController {
+	return &HookController{auth: auth}
+}
 
 // Мдель хука получаемого от гитхаба
 type HookPayload struct {
@@ -32,15 +42,8 @@ type HookCreatePage struct {
 	Message string
 }
 
-// Регистрация роутов по хукам
-func HookRoutes() {
-	http.Handle("/hooks/list", auth.RequireAuthentication(hookList))
-	http.Handle("/hooks/create", auth.RequireAuthentication(hookCreate))
-	http.Handle("/hooks/trigger", http.HandlerFunc(hookTrigger))
-}
-
 // Страница хуков проекта
-func hookList(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *HookController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 
@@ -49,14 +52,14 @@ func hookList(w http.ResponseWriter, req *http.Request, user models.User) {
 		return
 	}
 
-	templates.Render(w, "templates/hooks/list.html", HookListPage{
+	templates.Render(w, "web/templates/hooks/list.html", HookListPage{
 		Project: project,
 		Hooks:   models.GetHooksByProjectId(projectId),
 	}, user)
 }
 
 // Страница создания/редактирования хука
-func hookCreate(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *HookController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	message := ""
@@ -69,7 +72,7 @@ func hookCreate(w http.ResponseWriter, req *http.Request, user models.User) {
 	if http.MethodPost == req.Method {
 		branch := req.FormValue("branch")
 		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
-		provider := providers.GetProviderByType(providerData.ProviderType)
+		provider := vcs.GetProviderByType(providerData.ProviderType)
 
 		if provider == nil || providerData == (models.ProviderData{}) {
 			http.NotFound(w, req)
@@ -91,23 +94,23 @@ func hookCreate(w http.ResponseWriter, req *http.Request, user models.User) {
 			if *webHook.HookId == "0" || *webHook.HookId == "" || webHook.Save() == false {
 				// TODO: REMOVE HOOK ON PROVIDER
 				webHook.Delete()
-				message = "Can't create or save web hook. Please try again"
+				message = "Не удалось создать триггер. Пожалуйста попробуйте позже."
 			} else {
 				http.Redirect(w, req, "/hooks/list?projectId="+strconv.Itoa(int(project.Id)), http.StatusSeeOther)
 			}
 		} else {
-			message = "Can't save web hook. Please try again"
+			message = "Не удалось сохранить триггер. Пожаолуйста попробуйте позже."
 		}
 	}
 
-	templates.Render(w, "templates/hooks/create.html", HookCreatePage{
+	templates.Render(w, "web/templates/hooks/create.html", HookCreatePage{
 		Project: project,
 		Message: message,
 	}, user)
 }
 
 // Роут тригера хука
-func hookTrigger(w http.ResponseWriter, req *http.Request) {
+func (c *HookController) Trigger(w http.ResponseWriter, req *http.Request) {
 	if http.MethodPost == req.Method {
 		hookId := req.URL.Query().Get("hookId")
 		hook := models.GetHookById(hookId)
@@ -121,7 +124,7 @@ func hookTrigger(w http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
 		err := decoder.Decode(&payload)
 		if err != nil {
-			log.Print("Can't read GitHub hook. ", err, payload)
+			log.Print("Не удалось прочитать vcs web hook. ", err, payload)
 			http.NotFound(w, req)
 			return
 		}
@@ -134,7 +137,7 @@ func hookTrigger(w http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			RunProcess(project, payload)
+			//RunProcess(project, payload)
 
 			w.WriteHeader(200)
 			return

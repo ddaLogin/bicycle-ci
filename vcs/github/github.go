@@ -31,26 +31,26 @@ func SetConfig(cfg Config) {
 }
 
 // Ответ от GitHub'а
-type GitHubResponse struct {
+type Response struct {
 	Response []byte
 	Status   int
 }
 
 // Авторизационный АПИ токен
-type GitHubAccessToken struct {
+type AccessToken struct {
 	Token     string `json:"access_token"`
 	TokenType string `json:"token_type"`
 	Scope     string `json:"scope"`
 }
 
 // Пользователь GitHab'а
-type GitHubUser struct {
+type User struct {
 	Id    int    `json:"id"`
 	Login string `json:"login"`
 }
 
 // GitHub репозиторий
-type GitHubRepo struct {
+type Repository struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
@@ -61,7 +61,7 @@ type GitHubRepo struct {
 }
 
 // Ключ деплоя на стороне гитхаба
-type GitHubDeployKey struct {
+type DeployKey struct {
 	Id        int    `json:"id"`
 	Url       string `json:"url"`
 	Title     string `json:"title"`
@@ -71,7 +71,7 @@ type GitHubDeployKey struct {
 }
 
 // GitHub WebHook
-type GitHubWebHook struct {
+type WebHook struct {
 	Id     int `json:"id"`
 	Config struct {
 		Url string `json:"url"`
@@ -123,7 +123,7 @@ func (gh GitHub) UpdateProviderData(provider *models.ProviderData) {
 		return
 	}
 
-	user := GitHubUser{}
+	user := User{}
 	err = json.Unmarshal(response.Response, &user)
 	if err != nil {
 		log.Fatal("Can't parse GitHub provider data from response. ", err, string(response.Response))
@@ -187,7 +187,7 @@ func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project mode
 		return 0
 	}
 
-	deployKey := GitHubDeployKey{}
+	deployKey := DeployKey{}
 
 	err = json.Unmarshal(response.Response, &deployKey)
 	if err != nil {
@@ -215,7 +215,7 @@ func (gh GitHub) CreateWebHook(webHook models.WebHook, project models.Project) s
 		return "0"
 	}
 
-	gitWebHook := GitHubWebHook{}
+	gitWebHook := WebHook{}
 
 	err = json.Unmarshal(response.Response, &gitWebHook)
 	if err != nil {
@@ -242,7 +242,7 @@ func getAccessToken(code string) (token string) {
 		return
 	}
 
-	accessToken := GitHubAccessToken{}
+	accessToken := AccessToken{}
 
 	err = json.Unmarshal(response.Response, &accessToken)
 	if err != nil {
@@ -256,7 +256,7 @@ func getAccessToken(code string) (token string) {
 }
 
 // Подгружает список репозиториев
-func getRepositories(token string) (repos []GitHubRepo) {
+func getRepositories(token string) (repos []Repository) {
 	params := make(map[string]string)
 
 	response, err := get(config.ApiHost+"/user/repos", params, token)
@@ -274,7 +274,7 @@ func getRepositories(token string) (repos []GitHubRepo) {
 }
 
 // Подгружает список репозиториев
-func getRepository(ownerLogin string, repoName string, token string) (repo GitHubRepo) {
+func getRepository(ownerLogin string, repoName string, token string) (repo Repository) {
 	response, err := get(fmt.Sprintf("%v/repos/%v/%v", config.ApiHost, ownerLogin, repoName), make(map[string]string), token)
 	if err != nil {
 		return
@@ -290,7 +290,7 @@ func getRepository(ownerLogin string, repoName string, token string) (repo GitHu
 }
 
 // Выполняет POST запрос
-func post(url string, query []byte, token string) (response GitHubResponse, err error) {
+func post(url string, query []byte, token string) (response Response, err error) {
 	// Generate request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(query))
 	if err != nil {
@@ -302,7 +302,7 @@ func post(url string, query []byte, token string) (response GitHubResponse, err 
 }
 
 // Выполняет GET запрос
-func get(baseUrl string, params map[string]string, token string) (response GitHubResponse, err error) {
+func get(baseUrl string, params map[string]string, token string) (response Response, err error) {
 	link, _ := url.Parse(baseUrl)
 	query, _ := url.ParseQuery(link.RawQuery)
 
@@ -323,7 +323,7 @@ func get(baseUrl string, params map[string]string, token string) (response GitHu
 }
 
 // Выполняет отправку запроса и обработку ответа
-func send(req *http.Request, token string) (response GitHubResponse, err error) {
+func send(req *http.Request, token string) (response Response, err error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 

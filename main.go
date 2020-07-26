@@ -1,74 +1,52 @@
 package main
 
 import (
+	"flag"
 	"github.com/BurntSushi/toml"
-	"github.com/ddalogin/bicycle-ci/actions"
-	"github.com/ddalogin/bicycle-ci/database"
-	"github.com/ddalogin/bicycle-ci/models"
-	"github.com/ddalogin/bicycle-ci/providers/github"
+	"github.com/ddalogin/bicycle-ci/auth"
+	database2 "github.com/ddalogin/bicycle-ci/database"
+	"github.com/ddalogin/bicycle-ci/ssh"
 	"github.com/ddalogin/bicycle-ci/telegram"
+	"github.com/ddalogin/bicycle-ci/vcs/github"
+	"github.com/ddalogin/bicycle-ci/web"
 	"io"
 	"log"
-	"net/http"
 	"os"
 )
 
 type Config struct {
-	Url      string
-	Db       database.Config
-	Github   github.Config
-	Telegram telegram.Config
-}
-
-func init() {
-	initLogger()
+	SessionName      string
+	SessionSecretKey string
+	Web              web.Config
+	Db               database2.Config
+	Github           github.Config
+	Telegram         telegram.Config
 }
 
 func main() {
-	cfg := loadConfig()
-	actions.Host = cfg.Url
-	models.Host = cfg.Url
+	configPath := flag.String("config", "config.toml", "Конфиг с настройками")
+	logPath := flag.String("log", "errors.log", "Лог файл")
+	flag.Parse()
 
-	database.SetConfig(cfg.Db)
-	github.SetConfig(cfg.Github)
-	telegram.SetConfig(cfg.Telegram)
-
-	startServer(cfg)
-}
-
-// Инициализация логов
-func initLogger() {
-	f, err := os.OpenFile("errors.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(*logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatalf("Error opening log file: %v", err)
+		log.Fatal("Не удалось открыть лог файл", err)
 	}
 	defer f.Close()
 	wrt := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(wrt)
-}
 
-// Чтение настроек
-func loadConfig() Config {
 	var config Config
-	if _, err := toml.DecodeFile("config/config.toml", &config); err != nil {
-		log.Fatal(err)
+	if _, err := toml.DecodeFile(*configPath, &config); err != nil {
+		log.Fatal("Не удалось прочитать конфиг файл", err)
 	}
 
-	return config
-}
+	github.SetConfig(config.Github)
+	database2.SetConfig(config.Db)
+	authService := auth.NewService(config.SessionName, config.SessionSecretKey, "/login")
+	sshService := ssh.NewService()
+	telegramService := telegram.NewService(config.Telegram)
 
-// Подготовка, настройка и запуск сервера
-func startServer(cfg Config) {
-	actions.IndexRoutes()
-	actions.ProjectRoutes()
-	actions.HookRoutes()
-	actions.ProviderRoutes()
-	actions.BuildsRoutes()
-	actions.ServerRoutes()
-	actions.ImagesRoutes()
-
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	http.ListenAndServe(":8090", nil)
+	server := web.NewServer(config.Web, authService, sshService, telegramService)
+	server.Run()
 }
