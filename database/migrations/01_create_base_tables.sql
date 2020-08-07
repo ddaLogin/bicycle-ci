@@ -7,7 +7,7 @@ create table servers
     host           varchar(150) not null,
     deploy_public  text         not null,
     deploy_private text         not null
-);
+) charset = utf8;
 
 create table users
 (
@@ -19,7 +19,7 @@ create table users
     constraint users_login_uindex
         unique (login)
 )
-    comment 'Пользователи';
+    comment 'Пользователи' charset = utf8;
 
 create table images
 (
@@ -30,7 +30,7 @@ create table images
     user_id     int          not null,
     constraint containers_users_id_fk
         foreign key (user_id) references users (id)
-);
+) charset = utf8;
 
 create table providers
 (
@@ -46,7 +46,7 @@ create table providers
     constraint providers_users_id_fk
         foreign key (user_id) references users (id)
 )
-    comment 'VCS системы пользователей';
+    comment 'VCS системы пользователей' charset = utf8;
 
 create table projects
 (
@@ -72,7 +72,7 @@ create table projects
         foreign key (provider) references providers (id),
     constraint projects_users_id_fk
         foreign key (user_id) references users (id)
-);
+) charset = utf8;
 
 create table builds
 (
@@ -84,7 +84,7 @@ create table builds
     ended_at   timestamp                           null,
     constraint builds_projects_id_fk
         foreign key (project_id) references projects (id)
-);
+) charset = utf8;
 
 create table hooks
 (
@@ -99,7 +99,7 @@ create table hooks
         foreign key (project_id) references projects (id),
     constraint hooks_users_id_fk
         foreign key (user_id) references users (id)
-);
+) charset = utf8;
 
 create table steps
 (
@@ -113,4 +113,4 @@ create table steps
     status   int          not null,
     constraint steps_builds_id_fk
         foreign key (build_id) references builds (id)
-);
+) charset = utf8;
