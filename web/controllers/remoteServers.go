@@ -10,30 +10,30 @@ import (
 )
 
 // Контроллер удаленных серверов
-type ServerController struct {
+type RemoteServerController struct {
 	auth *auth.Service
 	ssh  *ssh.Service
 }
 
 // Конструктор контроллера удаленных сверверов
-func NewServerController(auth *auth.Service, ssh *ssh.Service) *ServerController {
-	return &ServerController{auth: auth, ssh: ssh}
+func NewServerController(auth *auth.Service, ssh *ssh.Service) *RemoteServerController {
+	return &RemoteServerController{auth: auth, ssh: ssh}
 }
 
 // Страница списка серверов
 type ServersListPage struct {
-	Servers []models.Server
+	Servers []models.RemoteServer
 	Message string
 }
 
 // Страница создание/редактирования сервера
 type ServerCreatePage struct {
-	Server  models.Server
+	Server  models.RemoteServer
 	Message string
 }
 
 // Страница серверов
-func (c *ServerController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *RemoteServerController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	templates.Render(w, "web/templates/servers/list.html", ServersListPage{
 		Servers: models.GetAllServers(),
 		Message: "",
@@ -41,7 +41,7 @@ func (c *ServerController) List(w http.ResponseWriter, req *http.Request, user m
 }
 
 // Страница создание сервера
-func (c *ServerController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *RemoteServerController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	serverId := req.URL.Query().Get("serverId")
 	buf, _ := strconv.Atoi(serverId)
 	server := models.GetServerById(buf)
@@ -53,7 +53,7 @@ func (c *ServerController) Create(w http.ResponseWriter, req *http.Request, user
 		host := req.FormValue("host")
 		isGenerate := req.FormValue("generate")
 
-		if (models.Server{}) == server {
+		if (models.RemoteServer{}) == server {
 			isGenerate = "true"
 		}
 

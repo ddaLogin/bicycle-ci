@@ -5,11 +5,11 @@ import (
 	"log"
 )
 
-const STATUS_RUNNING = 0 // Сборка в процессе
-const STATUS_SUCCESS = 1 // Сборка прошла успешно
-const STATUS_FAILED = 2  // Сборка завершилась с ошибкой
+const StatusRunning = 0 // Сборка в процессе
+const StatusSuccess = 1 // Сборка прошла успешно
+const StatusFailed = 2  // Сборка завершилась с ошибкой
 
-// Модель процесса сборки проекта
+// Модель сборки проекта
 type Build struct {
 	Id        int64
 	ProjectId int64
@@ -22,11 +22,11 @@ type Build struct {
 // Хелпер для рендера названия статуса
 func (b Build) StatusTitle() string {
 	switch b.Status {
-	case STATUS_RUNNING:
+	case StatusRunning:
 		return "В процессе"
-	case STATUS_SUCCESS:
+	case StatusSuccess:
 		return "Успешно"
-	case STATUS_FAILED:
+	case StatusFailed:
 		return "Ошибка"
 	}
 
@@ -36,11 +36,11 @@ func (b Build) StatusTitle() string {
 // Хелпер для рендера статуса нужным цветом
 func (b Build) StatusColor() string {
 	switch b.Status {
-	case STATUS_RUNNING:
+	case StatusRunning:
 		return "info"
-	case STATUS_SUCCESS:
+	case StatusSuccess:
 		return "success"
-	case STATUS_FAILED:
+	case StatusFailed:
 		return "danger"
 	}
 
@@ -166,11 +166,6 @@ func GetBuildsWithProjects() (builds []Build) {
 			&project.RepoOwnerId,
 			&project.DeployKeyId,
 			&project.DeployPrivate,
-			&project.BuildImage,
-			&project.BuildPlan,
-			&project.ArtifactDir,
-			&project.ServerId,
-			&project.DeployDir,
 		)
 		if err != nil {
 			log.Println("Can't scan Build with projects like list. ", err)

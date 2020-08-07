@@ -53,10 +53,12 @@ func (s *Server) route() {
 
 	projectC := controllers.NewProjectController(s.authService, s.sshService)
 	http.Handle("/projects/list", s.authService.AuthMiddleware(projectC.List))
+	http.Handle("/projects/detail", s.authService.AuthMiddleware(projectC.Detail))
 	http.Handle("/projects/repos", s.authService.AuthMiddleware(projectC.Repos))
 	http.Handle("/projects/create", s.authService.AuthMiddleware(projectC.Create))
 	http.Handle("/projects/deploy", s.authService.AuthMiddleware(projectC.Deploy))
-	http.Handle("/projects/plan", s.authService.AuthMiddleware(projectC.Plan))
+	http.Handle("/projects/plan/build", s.authService.AuthMiddleware(projectC.PlanBuild))
+	http.Handle("/projects/plan/deploy", s.authService.AuthMiddleware(projectC.PlanDeploy))
 
 	serverC := controllers.NewServerController(s.authService, s.sshService)
 	http.Handle("/servers/list", s.authService.AuthMiddleware(serverC.List))

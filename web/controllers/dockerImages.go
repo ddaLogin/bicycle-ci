@@ -8,35 +8,35 @@ import (
 )
 
 // Контроллер Docker образов
-type ImagesController struct {
+type DockerImagesController struct {
 	auth *auth.Service
 }
 
 // Конструктор контроллера Docker образов
-func NewImagesController(auth *auth.Service) *ImagesController {
-	return &ImagesController{auth: auth}
+func NewImagesController(auth *auth.Service) *DockerImagesController {
+	return &DockerImagesController{auth: auth}
 }
 
 // Страница списка
 type ImagesListPage struct {
-	Images []models.Image
+	Images []models.DockerImage
 }
 
 // Страница создания
 type ImageCreatePage struct {
-	Image   models.Image
+	Image   models.DockerImage
 	Message string
 }
 
 // Страница образов
-func (c *ImagesController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *DockerImagesController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	templates.Render(w, "web/templates/images/list.html", ImagesListPage{
 		Images: models.GetImages(),
 	}, user)
 }
 
 // Страница создания/редактирования образа
-func (c *ImagesController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *DockerImagesController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	imageId := req.URL.Query().Get("imageId")
 	image := models.GetImageById(imageId)
 	message := ""

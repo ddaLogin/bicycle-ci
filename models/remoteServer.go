@@ -5,8 +5,8 @@ import (
 	"log"
 )
 
-// Модель Server'а
-type Server struct {
+// Модель RemoteServer'а
+type RemoteServer struct {
 	Id            int64  // Идентификатор
 	Name          string // Имя сервера
 	Login         string // Логин пользователя
@@ -16,10 +16,10 @@ type Server struct {
 }
 
 // Получить все сервера
-func GetAllServers() (servers []Server) {
+func GetAllServers() (servers []RemoteServer) {
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM servers")
+	rows, err := db.Query("SELECT * FROM remote_servers")
 	if err != nil {
 		log.Println("Can't get all servers. ", err)
 		return
@@ -27,7 +27,7 @@ func GetAllServers() (servers []Server) {
 	defer rows.Close()
 
 	for rows.Next() {
-		server := Server{}
+		server := RemoteServer{}
 		err := rows.Scan(
 			&server.Id,
 			&server.Name,
@@ -48,10 +48,10 @@ func GetAllServers() (servers []Server) {
 }
 
 // Получить сервер по идентификатору
-func GetServerById(id int) (server Server) {
+func GetServerById(id int) (server RemoteServer) {
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM servers WHERE id = ?", id)
+	rows, err := db.Query("SELECT * FROM remote_servers WHERE id = ?", id)
 	if err != nil {
 		log.Println("Can't get server by id. ", err)
 		return
@@ -77,15 +77,15 @@ func GetServerById(id int) (server Server) {
 }
 
 // Сохранить сервер
-func (sr Server) Save() bool {
+func (sr RemoteServer) Save() bool {
 	db := database.Db()
 	defer db.Close()
 
 	if sr.Id == 0 {
-		result, err := db.Exec("insert into servers (`name`, login, host, deploy_public, deploy_private) values (?, ?, ?, ?, ?)",
+		result, err := db.Exec("insert into remote_servers (`name`, login, host, deploy_public, deploy_private) values (?, ?, ?, ?, ?)",
 			sr.Name, sr.Login, sr.Host, sr.DeployPublic, sr.DeployPrivate)
 		if err != nil {
-			log.Println("Can't insert Server. ", err, sr)
+			log.Println("Can't insert RemoteServer. ", err, sr)
 			return false
 		}
 
@@ -93,10 +93,10 @@ func (sr Server) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE servers SET `name` = ?, login = ?, host = ?, deploy_public = ?, deploy_private = ? WHERE id = ?",
+		_, err := db.Exec("UPDATE remote_servers SET `name` = ?, login = ?, host = ?, deploy_public = ?, deploy_private = ? WHERE id = ?",
 			sr.Name, sr.Login, sr.Host, sr.DeployPrivate, sr.DeployPublic, sr.Id)
 		if err != nil {
-			log.Println("Can't update Server. ", err, sr)
+			log.Println("Can't update RemoteServer. ", err, sr)
 			return false
 		}
 

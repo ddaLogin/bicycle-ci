@@ -10,13 +10,13 @@ import (
 )
 
 // Контроллер систем конроля версий (Github/Bitbucket ...)
-type VcsController struct {
+type VcsProvidersController struct {
 	auth *auth.Service
 }
 
 // Конструктор систем контроля версий
-func NewVcsController(auth *auth.Service) *VcsController {
-	return &VcsController{auth: auth}
+func NewVcsController(auth *auth.Service) *VcsProvidersController {
+	return &VcsProvidersController{auth: auth}
 }
 
 // Страница списка доступных провайдеров
@@ -26,7 +26,7 @@ type ProvidersListPage struct {
 }
 
 // Страница VCS провайдеров
-func (c *VcsController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *VcsProvidersController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	message := req.URL.Query().Get("message")
 
 	templates.Render(w, "web/templates/vcs/list.html", ProvidersListPage{
@@ -36,7 +36,7 @@ func (c *VcsController) List(w http.ResponseWriter, req *http.Request, user mode
 }
 
 // Callback роут после oauth авторизации у провайдера
-func (c *VcsController) OAuthCallback(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *VcsProvidersController) OAuthCallback(w http.ResponseWriter, req *http.Request, user models.User) {
 	providerType, _ := strconv.Atoi(req.URL.Query().Get("providerType"))
 	provider := vcs.GetProviderByType(providerType)
 
@@ -54,8 +54,8 @@ func (c *VcsController) OAuthCallback(w http.ResponseWriter, req *http.Request, 
 
 	providerData := models.GetProviderDataByUserAndType(user.Id, providerType)
 
-	if (models.ProviderData{} == providerData) {
-		providerData = models.ProviderData{UserId: user.Id, ProviderType: providerType}
+	if (models.VcsProviderData{} == providerData) {
+		providerData = models.VcsProviderData{UserId: user.Id, ProviderType: providerType}
 	}
 
 	providerData.ProviderAuthToken = providerToken

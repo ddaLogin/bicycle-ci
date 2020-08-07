@@ -7,7 +7,7 @@ import (
 )
 
 // Образ контейнера для сборки
-type Image struct {
+type DockerImage struct {
 	Id          int64
 	Name        string
 	Description string
@@ -15,17 +15,17 @@ type Image struct {
 }
 
 // Получить модель пользователя
-func (img *Image) User() User {
+func (img *DockerImage) User() User {
 	return GetUserById(strconv.Itoa(int(img.UserId)))
 }
 
 // Сохранить образ
-func (img *Image) Save() bool {
+func (img *DockerImage) Save() bool {
 	db := database.Db()
 	defer db.Close()
 
 	if img.Id == 0 {
-		result, err := db.Exec("insert into images (`name`, description, user_id) values (?, ?, ?)",
+		result, err := db.Exec("insert into docker_images (`name`, description, user_id) values (?, ?, ?)",
 			img.Name, img.Description, img.UserId)
 		if err != nil {
 			log.Println("Can't insert container. ", err, img)
@@ -36,7 +36,7 @@ func (img *Image) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE images SET `name` = ?, description = ?, user_id = ? WHERE id = ?",
+		_, err := db.Exec("UPDATE docker_images SET `name` = ?, description = ?, user_id = ? WHERE id = ?",
 			img.Name, img.Description, img.UserId, img.Id)
 		if err != nil {
 			log.Println("Can't update container. ", err, img)
@@ -50,10 +50,10 @@ func (img *Image) Save() bool {
 }
 
 // Получить список всех образов
-func GetImages() (images []Image) {
+func GetImages() (images []DockerImage) {
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM images")
+	rows, err := db.Query("SELECT * FROM docker_images")
 	if err != nil {
 		log.Println("Can't get Images like list. ", err)
 		return
@@ -61,7 +61,7 @@ func GetImages() (images []Image) {
 	defer rows.Close()
 
 	for rows.Next() {
-		image := Image{}
+		image := DockerImage{}
 		err := rows.Scan(
 			&image.Id,
 			&image.Name,
@@ -80,10 +80,10 @@ func GetImages() (images []Image) {
 }
 
 // Получить образ по ID
-func GetImageById(imageId string) (image Image) {
+func GetImageById(imageId string) (image DockerImage) {
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM images WHERE id = ?", imageId)
+	rows, err := db.Query("SELECT * FROM docker_images WHERE id = ?", imageId)
 	if err != nil {
 		log.Println("Can't get Images by id. ", err)
 		return

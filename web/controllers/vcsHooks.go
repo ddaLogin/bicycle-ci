@@ -14,14 +14,14 @@ import (
 )
 
 // Контроллер vcs web хуков
-type HookController struct {
+type VcsHooksController struct {
 	auth          *auth.Service
 	workerService *worker.Service
 }
 
 // Конструктор контроллера vcs web хуков
-func NewHookController(auth *auth.Service, workerService *worker.Service) *HookController {
-	return &HookController{auth: auth, workerService: workerService}
+func NewHookController(auth *auth.Service, workerService *worker.Service) *VcsHooksController {
+	return &VcsHooksController{auth: auth, workerService: workerService}
 }
 
 // Мдель хука получаемого от гитхаба
@@ -35,7 +35,7 @@ type HookPayload struct {
 // Страница списка хуков проекта
 type HookListPage struct {
 	Project models.Project
-	Hooks   []models.WebHook
+	Hooks   []models.VcsHook
 }
 
 // Страница создания/редактирования хука
@@ -45,7 +45,7 @@ type HookCreatePage struct {
 }
 
 // Страница хуков проекта
-func (c *HookController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *VcsHooksController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 
@@ -61,7 +61,7 @@ func (c *HookController) List(w http.ResponseWriter, req *http.Request, user mod
 }
 
 // Страница создания/редактирования хука
-func (c *HookController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	message := ""
@@ -76,14 +76,14 @@ func (c *HookController) Create(w http.ResponseWriter, req *http.Request, user m
 		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
 		provider := vcs.GetProviderByType(providerData.ProviderType)
 
-		if provider == nil || providerData == (models.ProviderData{}) {
+		if provider == nil || providerData == (models.VcsProviderData{}) {
 			http.NotFound(w, req)
 			return
 		}
 
 		provider.SetProviderData(providerData)
 
-		webHook := models.WebHook{}
+		webHook := models.VcsHook{}
 		webHook.Branch = branch
 		webHook.Event = `push`
 		webHook.UserId = user.Id
@@ -112,12 +112,12 @@ func (c *HookController) Create(w http.ResponseWriter, req *http.Request, user m
 }
 
 // Роут тригера хука
-func (c *HookController) Trigger(w http.ResponseWriter, req *http.Request) {
+func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 	if http.MethodPost == req.Method {
 		hookId := req.URL.Query().Get("hookId")
 		hook := models.GetHookById(hookId)
 
-		if (models.WebHook{}) == hook {
+		if (models.VcsHook{}) == hook {
 			http.NotFound(w, req)
 			return
 		}

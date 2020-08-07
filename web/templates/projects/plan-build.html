@@ -1,0 +1,67 @@
+{{define "content"}}
+    <div class="col col-sm-8 offset-2">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cogs"></i> План сборки проекта &laquo;{{ .Content.Project.Name }}&raquo;
+                </h3>
+            </div>
+            <form class="form-horizontal" action="/projects/plan/build?projectId={{ .Content.Project.Id }}{{ if gt .Content.BuildPlan.Id 0 }}&id={{ .Content.BuildPlan.Id }} {{ end }}" method="post">
+                <div class="card-body">
+                    {{if .Content.Message}}
+                        <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
+                        <hr>
+                    {{end}}
+                    <div class="form-group">
+                        <label for="title">Имя плана сборки</label>
+                        <div class="input-group">
+                            <input type="text" id="title" name="title" class="form-control" value="{{ if .Content.BuildPlan.Title }}{{ .Content.BuildPlan.Title }}{{ end }}"
+                            placeholder="Production/Test/Development/Staging" required/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="build_image">Выберите Docker образ в котором будет происходить сборка</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-toolbox"></i></span>
+                            </div>
+                            <select class="form-control" id="build_image" name="docker_image" required>
+                                {{ range $key, $image := .Content.Images }}
+                                    <option value="{{ $image.Id }}" {{ if RefEq $.Content.BuildPlan.DockerImage $image.Id }}selected{{ end }}>{{ $image.Name }}</option>
+                                {{ end }}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="plan">
+                            <i class="fas fa-scroll"></i> Используя bash скрипт установите зависимости, скомпилируйте и сконфигурируйте свой проект если это требуется.
+                        </label>
+                        <textarea name="plan" class="form-control" id="plan" rows="6" required>{{ if .Content.BuildPlan.BuildInstruction }}{{ .Content.BuildPlan.BuildInstruction }}{{ end }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="artifact">
+                            Укажите локальный путь относительно проекта, к директории которую необходимо развернуть.
+                            <br>
+                            Оставить пустым для копирования всего проекта
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                            </div>
+                            <input type="text" id="artifact" name="artifact" class="form-control" value="{{ if .Content.BuildPlan.Artifact }}{{ .Content.BuildPlan.Artifact }}{{ end }}"
+                            placeholder="dist/my-site"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success col-sm-12">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <br>
+    <br>
+    <br>
+{{end}}

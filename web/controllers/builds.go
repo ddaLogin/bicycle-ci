@@ -24,7 +24,7 @@ func NewBuildsController(auth *auth.Service, workerService *worker.Service) *Bui
 // Шаблон страницы сборки
 type StatusPage struct {
 	Project models.Project
-	Output  []models.Step
+	Output  []models.BuildStep
 	Build   models.Build
 }
 

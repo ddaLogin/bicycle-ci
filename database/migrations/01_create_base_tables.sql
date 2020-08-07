@@ -69,7 +69,7 @@ create table projects
     constraint projects_name_uindex
         unique (name),
     constraint projects_providers_id_fk
-        foreign key (provider) references providers (id),
+        foreign key (provider) references vcs_providers (id),
     constraint projects_users_id_fk
         foreign key (user_id) references users (id)
 ) charset = utf8;

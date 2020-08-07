@@ -5,12 +5,12 @@ import (
 	"log"
 )
 
-const STEP_STATUS_RUNING = 0  // Шаг в процессе
-const STEP_STATUS_FAILED = 1  // Шаг заверишлся ошибкой
-const STEP_STATUS_SUCCESS = 2 // Шаг прошел успешно
+const StepStatusRunning = 0 // Шаг в процессе
+const StepStatusFailed = 1  // Шаг заверишлся ошибкой
+const StepStatusSuccess = 2 // Шаг прошел успешно
 
 // Один шаг из сборки
-type Step struct {
+type BuildStep struct {
 	Id      int64
 	BuildId int64
 	Name    string
@@ -21,12 +21,12 @@ type Step struct {
 }
 
 // Сохранить Шаг
-func (st *Step) Save() bool {
+func (st *BuildStep) Save() bool {
 	db := database.Db()
 	defer db.Close()
 
 	if st.Id == 0 {
-		result, err := db.Exec("insert into steps (build_id, `name`, std_out, std_err, error, status) values (?, ?, ?, ?, ?, ?)",
+		result, err := db.Exec("insert into build_steps (build_id, `name`, std_out, std_err, error, status) values (?, ?, ?, ?, ?, ?)",
 			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status)
 		if err != nil {
 			log.Println("Can't insert step. ", err, st)
@@ -37,7 +37,7 @@ func (st *Step) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE steps SET build_id = ?, `name` = ?, std_out = ?, std_err = ?, error = ?, status = ? WHERE id = ?",
+		_, err := db.Exec("UPDATE build_steps SET build_id = ?, `name` = ?, std_out = ?, std_err = ?, error = ?, status = ? WHERE id = ?",
 			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status, st.Id)
 		if err != nil {
 			log.Println("Can't update step. ", err, st)
@@ -51,10 +51,10 @@ func (st *Step) Save() bool {
 }
 
 // Получить шаги билда
-func GetStepsByBuildId(buildId int64) (steps []Step) {
+func GetStepsByBuildId(buildId int64) (steps []BuildStep) {
 	db := database.Db()
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM steps WHERE build_id = ?", buildId)
+	rows, err := db.Query("SELECT * FROM build_steps WHERE build_id = ?", buildId)
 	if err != nil {
 		log.Println("Can't get steps by build id. ", err)
 		return
@@ -62,7 +62,7 @@ func GetStepsByBuildId(buildId int64) (steps []Step) {
 	defer rows.Close()
 
 	for rows.Next() {
-		step := Step{}
+		step := BuildStep{}
 		err := rows.Scan(
 			&step.Id,
 			&step.BuildId,

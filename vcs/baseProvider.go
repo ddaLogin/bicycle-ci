@@ -7,20 +7,20 @@ import (
 )
 
 // GitHub провайдер
-const GITHUB_TYPE = 1
+const GithubType = 1
 
 // Интерфейс VCS провадеров
 type ProviderInterface interface {
-	SetProviderData(providerData models.ProviderData)                               // Устанавливает данные провайдера
+	SetProviderData(providerData models.VcsProviderData)                            // Устанавливает данные провайдера
 	GetTitle() string                                                               // Название провайдера
 	GetImageUrl() string                                                            // Ссылка на картинку
 	GetAuthLink() string                                                            // Генерация ссылки для OAuth авторизации
 	OAuthCallback(req *http.Request) string                                         // Обработка oAuth авторизации
-	UpdateProviderData(provider *models.ProviderData)                               // Запрос на основную информацию аккаунта
+	UpdateProviderData(provider *models.VcsProviderData)                            // Запрос на основную информацию аккаунта
 	LoadProjects() (projects map[int]*models.Project)                               // Загрузить список репозиториев
 	LoadProjectToEnable(ownerName string, repoName string) (project models.Project) // Загрузить репозиторий
 	UploadProjectDeployKey(keyName string, key string, project models.Project) int  // Загружает на сервер VCS деплой ключ
-	CreateWebHook(webHook models.WebHook, project models.Project) string            // Создает Web Hook в репозитории
+	CreateWebHook(webHook models.VcsHook, project models.Project) string            // Создает Web Hook в репозитории
 }
 
 // Список всех доступных VCS провайдеров
@@ -32,7 +32,7 @@ func GetAvailableProviders() (list []ProviderInterface) {
 // Фабричный метод для создания нужного провайдера по типу
 func GetProviderByType(providerType int) (provider ProviderInterface) {
 
-	if providerType == GITHUB_TYPE {
+	if providerType == GithubType {
 		provider = &github.GitHub{}
 	}
 

@@ -6,7 +6,7 @@ import (
 )
 
 // Модель подлюченного провайдера
-type ProviderData struct {
+type VcsProviderData struct {
 	Id                   int64  // Идентификатор провайдера
 	UserId               int    // Идентификатор пользователя
 	ProviderType         int    // Тип провайдера
@@ -16,15 +16,15 @@ type ProviderData struct {
 }
 
 // Сохранить данные о провайдере
-func (pd *ProviderData) Save() bool {
+func (pd *VcsProviderData) Save() bool {
 	db := database.Db()
 	defer db.Close()
 
 	if pd.Id == 0 {
-		result, err := db.Exec("insert into providers (user_id, provider_type, provider_auth_token, provider_account_id, provider_account_login) values (?, ?, ?, ?, ?)",
+		result, err := db.Exec("insert into vcs_providers (user_id, provider_type, provider_auth_token, provider_account_id, provider_account_login) values (?, ?, ?, ?, ?)",
 			pd.UserId, pd.ProviderType, pd.ProviderAuthToken, pd.ProviderAccountId, pd.ProviderAccountLogin)
 		if err != nil {
-			log.Println("Can't insert ProviderData. ", err, pd)
+			log.Println("Can't insert VcsProviderData. ", err, pd)
 			return false
 		}
 
@@ -32,10 +32,10 @@ func (pd *ProviderData) Save() bool {
 
 		return true
 	} else {
-		_, err := db.Exec("UPDATE providers SET user_id = ?, provider_type = ?, provider_auth_token = ?, provider_account_id = ?, provider_account_login = ? WHERE id = ?",
+		_, err := db.Exec("UPDATE vcs_providers SET user_id = ?, provider_type = ?, provider_auth_token = ?, provider_account_id = ?, provider_account_login = ? WHERE id = ?",
 			pd.UserId, pd.ProviderType, pd.ProviderAuthToken, pd.ProviderAccountId, pd.ProviderAccountLogin, pd.Id)
 		if err != nil {
-			log.Println("Can't update ProviderData. ", err, pd)
+			log.Println("Can't update VcsProviderData. ", err, pd)
 			return false
 		}
 
@@ -46,11 +46,11 @@ func (pd *ProviderData) Save() bool {
 }
 
 // Получение подключенного провайдера пользователя по типу
-func GetProviderDataByUserAndType(userId int, providerType int) (provider ProviderData) {
+func GetProviderDataByUserAndType(userId int, providerType int) (provider VcsProviderData) {
 	db := database.Db()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM providers WHERE user_id = ? AND provider_type = ?", userId, providerType)
+	rows, err := db.Query("SELECT * FROM vcs_providers WHERE user_id = ? AND provider_type = ?", userId, providerType)
 	if err != nil {
 		log.Println("Can't get provider by user id and type. ", err)
 		return
@@ -76,11 +76,11 @@ func GetProviderDataByUserAndType(userId int, providerType int) (provider Provid
 }
 
 // Получение провайдера по ID
-func GetProviderDataById(id string) (provider ProviderData) {
+func GetProviderDataById(id string) (provider VcsProviderData) {
 	db := database.Db()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM providers WHERE id = ?", id)
+	rows, err := db.Query("SELECT * FROM vcs_providers WHERE id = ?", id)
 	if err != nil {
 		log.Println("Can't get provider by id. ", err)
 		return

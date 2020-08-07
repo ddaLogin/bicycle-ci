@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/ssh"
@@ -26,6 +27,13 @@ type ProjectListPage struct {
 	Projects []models.Project
 }
 
+// Страница деталей проекта
+type ProjectDetailPage struct {
+	Project     models.Project
+	BuildPlans  []*models.ProjectBuildPlan
+	DeployPlans []*models.ProjectDeployPlan
+}
+
 // Страница активации проектов
 type ProjectEnablePage struct {
 	ProjectsToEnable map[int]*models.Project
@@ -37,12 +45,20 @@ type ProjectDeployPage struct {
 	Message string
 }
 
-// Страница редактирования плана
-type ProjectPlanPage struct {
-	Project models.Project
-	Servers []models.Server
-	Images  []models.Image
-	Message string
+// Страница редактирования плана сборки
+type ProjectBuildPlanPage struct {
+	Project   models.Project
+	BuildPlan *models.ProjectBuildPlan
+	Images    []models.DockerImage
+	Message   string
+}
+
+// Страница редактирования плана релиза
+type ProjectDeployPlanPage struct {
+	Project    models.Project
+	DeployPlan *models.ProjectDeployPlan
+	Servers    []models.RemoteServer
+	Message    string
 }
 
 // Страница проектов пользователя
@@ -52,11 +68,27 @@ func (c *ProjectController) List(w http.ResponseWriter, req *http.Request, user 
 	}, user)
 }
 
+// Страница проекта
+func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, user models.User) {
+	project := models.GetProjectById(req.URL.Query().Get("id"))
+
+	if (models.Project{}) == project || project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	templates.Render(w, "web/templates/projects/detail.html", ProjectDetailPage{
+		Project:     project,
+		BuildPlans:  models.GetProjectBuildPlansByProjectId(project.Id),
+		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
+	}, user)
+}
+
 // Страница выбора репозитория для нового проекта
 func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user models.User) {
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
 
-	if (models.ProviderData{}) == providerData && providerData.UserId != user.Id {
+	if (models.VcsProviderData{}) == providerData && providerData.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -88,7 +120,7 @@ func (c *ProjectController) Create(w http.ResponseWriter, req *http.Request, use
 	repoOwner := req.URL.Query().Get("repoOwner")
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
 
-	if (models.ProviderData{}) == providerData && providerData.UserId != user.Id {
+	if (models.VcsProviderData{}) == providerData || providerData.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -114,7 +146,7 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 	project := models.GetProjectById(projectId)
 	message := ""
 
-	if (models.Project{}) == project && project.UserId != user.Id {
+	if (models.Project{}) == project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -127,7 +159,7 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
 		provider := vcs.GetProviderByType(providerData.ProviderType)
 
-		if provider == nil || providerData == (models.ProviderData{}) {
+		if provider == nil || providerData == (models.VcsProviderData{}) {
 			http.NotFound(w, req)
 			return
 		}
@@ -163,46 +195,100 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 	}, user)
 }
 
-// Редактирование плана сборки
-func (c *ProjectController) Plan(w http.ResponseWriter, req *http.Request, user models.User) {
-	projectId := req.URL.Query().Get("projectId")
-	project := models.GetProjectById(projectId)
-	servers := models.GetAllServers()
+// Редактирование/Создание плана сборки
+func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, user models.User) {
+	project := models.GetProjectById(req.URL.Query().Get("projectId"))
 	images := models.GetImages()
+	buildPlan := &models.ProjectBuildPlan{}
 	message := ""
 
-	if (models.Project{}) == project && project.UserId != user.Id {
+	if (models.Project{}) == project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
 
+	buildPlanId := req.URL.Query().Get("id")
+
+	if buildPlanId != "" {
+		buildPlan = models.GetProjectBuildPlanById(buildPlanId)
+
+		if buildPlan == nil || *buildPlan == (models.ProjectBuildPlan{}) {
+			http.NotFound(w, req)
+			return
+		}
+	}
+
 	if http.MethodPost == req.Method {
-		plan := req.FormValue("plan")
-		deployDir := req.FormValue("deploy_dir")
-		artifactDir := req.FormValue("artifact_dir")
-		imageId := req.FormValue("build_image")
-		serverId := req.FormValue("server_id")
+		imageId, _ := strconv.Atoi(req.FormValue("docker_image"))
 
-		buff, _ := strconv.Atoi(imageId)
-		project.BuildImage = &buff
-		project.BuildPlan = &plan
-		project.DeployDir = &deployDir
-		project.ArtifactDir = &artifactDir
+		buildPlan.Title = req.FormValue("title")
+		buildPlan.ProjectId = int(project.Id)
+		buildPlan.BuildInstruction = req.FormValue("plan")
+		buildPlan.Artifact = req.FormValue("artifact")
+		buildPlan.DockerImage = imageId
 
-		buff2, _ := strconv.Atoi(serverId)
-		project.ServerId = &buff2
-
-		if project.Save() {
-			http.Redirect(w, req, "/projects/list", http.StatusSeeOther)
+		if buildPlan.Save() {
+			http.Redirect(w, req, fmt.Sprintf("/projects/detail?id=%d", project.Id), http.StatusSeeOther)
 		} else {
 			message = "Не удалось сохранить план сборки. Пожалуйста попробуйте позже."
 		}
 	}
 
-	templates.Render(w, "web/templates/projects/plan.html", ProjectPlanPage{
-		Project: project,
-		Servers: servers,
-		Images:  images,
-		Message: message,
+	templates.Render(w, "web/templates/projects/plan-build.html", ProjectBuildPlanPage{
+		Project:   project,
+		BuildPlan: buildPlan,
+		Images:    images,
+		Message:   message,
+	}, user)
+}
+
+// Редактирование/Создание деплоймент плана
+func (c *ProjectController) PlanDeploy(w http.ResponseWriter, req *http.Request, user models.User) {
+	project := models.GetProjectById(req.URL.Query().Get("projectId"))
+	servers := models.GetAllServers()
+	deployPlan := &models.ProjectDeployPlan{}
+	message := ""
+
+	if (models.Project{}) == project || project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	deployPlanId := req.URL.Query().Get("id")
+
+	if deployPlanId != "" {
+		deployPlan = models.GetProjectDeployPlanById(deployPlanId)
+
+		if deployPlan == nil || *deployPlan == (models.ProjectDeployPlan{}) {
+			http.NotFound(w, req)
+			return
+		}
+	}
+
+	if http.MethodPost == req.Method {
+		serverId, _ := strconv.Atoi(req.FormValue("remote_server"))
+
+		deployPlan.Title = req.FormValue("title")
+		deployPlan.ProjectId = int(project.Id)
+		deployPlan.DeploymentDirectory = req.FormValue("deployment_directory")
+
+		if serverId > 0 {
+			deployPlan.RemoteServerId = &serverId
+		} else {
+			deployPlan.RemoteServerId = nil
+		}
+
+		if deployPlan.Save() {
+			http.Redirect(w, req, fmt.Sprintf("/projects/detail?id=%d", project.Id), http.StatusSeeOther)
+		} else {
+			message = "Не удалось сохранить план релиза. Пожалуйста попробуйте позже."
+		}
+	}
+
+	templates.Render(w, "web/templates/projects/plan-deploy.html", ProjectDeployPlanPage{
+		Project:    project,
+		DeployPlan: deployPlan,
+		Servers:    servers,
+		Message:    message,
 	}, user)
 }

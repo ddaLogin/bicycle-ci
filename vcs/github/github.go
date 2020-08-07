@@ -80,11 +80,11 @@ type WebHook struct {
 
 // GitHub провайдер
 type GitHub struct {
-	Data models.ProviderData
+	Data models.VcsProviderData
 }
 
 // Название провайдера
-func (gh *GitHub) SetProviderData(providerData models.ProviderData) {
+func (gh *GitHub) SetProviderData(providerData models.VcsProviderData) {
 	gh.Data = providerData
 }
 
@@ -117,7 +117,7 @@ func (gh GitHub) OAuthCallback(req *http.Request) string {
 }
 
 // Запрос на основную информацию аккаунта
-func (gh GitHub) UpdateProviderData(provider *models.ProviderData) {
+func (gh GitHub) UpdateProviderData(provider *models.VcsProviderData) {
 	response, err := get(config.ApiHost+"/user", make(map[string]string), provider.ProviderAuthToken)
 	if err != nil {
 		return
@@ -199,7 +199,7 @@ func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project mode
 }
 
 // Создает Web Hook в репозитории
-func (gh GitHub) CreateWebHook(webHook models.WebHook, project models.Project) string {
+func (gh GitHub) CreateWebHook(webHook models.VcsHook, project models.Project) string {
 	url := fmt.Sprintf("%v/repos/%v/%v/hooks", config.ApiHost, project.RepoOwnerName, project.RepoName)
 	config := `{"content_type": "json", "insecure_ssl": "1", "url": "` + webHook.GetTriggerUrl() + `"}`
 	body := []byte(`{"config": ` + config + ` , "events": ["` + strings.TrimSpace(webHook.Event) + `"]}`)
