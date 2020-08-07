@@ -19,26 +19,26 @@ func NewImagesController(auth *auth.Service) *DockerImagesController {
 
 // Страница списка
 type ImagesListPage struct {
-	Images []models.DockerImage
+	Images []*models.DockerImage
 }
 
 // Страница создания
 type ImageCreatePage struct {
-	Image   models.DockerImage
+	Image   *models.DockerImage
 	Message string
 }
 
 // Страница образов
 func (c *DockerImagesController) List(w http.ResponseWriter, req *http.Request, user models.User) {
 	templates.Render(w, "web/templates/images/list.html", ImagesListPage{
-		Images: models.GetImages(),
+		Images: models.GetAllDockerImages(),
 	}, user)
 }
 
 // Страница создания/редактирования образа
 func (c *DockerImagesController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
 	imageId := req.URL.Query().Get("imageId")
-	image := models.GetImageById(imageId)
+	image := models.GetDockerImageById(imageId)
 	message := ""
 
 	if http.MethodPost == req.Method {

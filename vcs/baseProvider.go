@@ -19,8 +19,8 @@ type ProviderInterface interface {
 	UpdateProviderData(provider *models.VcsProviderData)                            // Запрос на основную информацию аккаунта
 	LoadProjects() (projects map[int]*models.Project)                               // Загрузить список репозиториев
 	LoadProjectToEnable(ownerName string, repoName string) (project models.Project) // Загрузить репозиторий
-	UploadProjectDeployKey(keyName string, key string, project models.Project) int  // Загружает на сервер VCS деплой ключ
-	CreateWebHook(webHook models.VcsHook, project models.Project) string            // Создает Web Hook в репозитории
+	UploadProjectDeployKey(keyName string, key string, project *models.Project) int // Загружает на сервер VCS деплой ключ
+	CreateWebHook(webHook *models.VcsHook, project *models.Project) string          // Создает Web Hook в репозитории
 }
 
 // Список всех доступных VCS провайдеров

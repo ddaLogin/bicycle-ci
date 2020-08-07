@@ -69,7 +69,6 @@ func (s *Server) route() {
 	http.Handle("/vcs/callback", s.authService.AuthMiddleware(vscC.OAuthCallback))
 
 	hookC := controllers.NewHookController(s.authService, s.workerService)
-	http.Handle("/hooks/list", s.authService.AuthMiddleware(hookC.List))
 	http.Handle("/hooks/create", s.authService.AuthMiddleware(hookC.Create))
 	http.Handle("/hooks/trigger", http.HandlerFunc(hookC.Trigger))
 

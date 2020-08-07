@@ -76,7 +76,7 @@ func GetProviderDataByUserAndType(userId int, providerType int) (provider VcsPro
 }
 
 // Получение провайдера по ID
-func GetProviderDataById(id string) (provider VcsProviderData) {
+func GetProviderDataById(id interface{}) (provider VcsProviderData) {
 	db := database.Db()
 	defer db.Close()
 

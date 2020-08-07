@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ddalogin/bicycle-ci/auth"
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/vcs"
@@ -32,82 +33,82 @@ type HookPayload struct {
 	}
 }
 
-// Страница списка хуков проекта
-type HookListPage struct {
-	Project models.Project
-	Hooks   []models.VcsHook
-}
-
 // Страница создания/редактирования хука
 type HookCreatePage struct {
-	Project models.Project
-	Message string
-}
-
-// Страница хуков проекта
-func (c *VcsHooksController) List(w http.ResponseWriter, req *http.Request, user models.User) {
-	projectId := req.URL.Query().Get("projectId")
-	project := models.GetProjectById(projectId)
-
-	if (models.Project{}) == project && project.UserId != user.Id {
-		http.NotFound(w, req)
-		return
-	}
-
-	templates.Render(w, "web/templates/hooks/list.html", HookListPage{
-		Project: project,
-		Hooks:   models.GetHooksByProjectId(projectId),
-	}, user)
+	Project    *models.Project
+	BuildPlans []*models.ProjectBuildPlan
+	VcsHook    *models.VcsHook
+	Message    string
 }
 
 // Страница создания/редактирования хука
 func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
-	projectId := req.URL.Query().Get("projectId")
-	project := models.GetProjectById(projectId)
+	project := models.GetProjectById(req.URL.Query().Get("projectId"))
 	message := ""
+	vcsHook := &models.VcsHook{}
 
-	if (models.Project{}) == project && project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
 
+	vcsHookId := req.URL.Query().Get("id")
+
+	if vcsHookId != "" {
+		vcsHook = models.GetVcsHookById(vcsHookId)
+
+		if vcsHook == nil || *vcsHook == (models.VcsHook{}) {
+			http.NotFound(w, req)
+			return
+		}
+	}
+
 	if http.MethodPost == req.Method {
-		branch := req.FormValue("branch")
-		providerData := models.GetProviderDataById(strconv.Itoa(int(project.Provider)))
+		providerData := models.GetProviderDataById(project.Provider)
 		provider := vcs.GetProviderByType(providerData.ProviderType)
+		buildPlan := models.GetProjectBuildPlanById(req.FormValue("build_plan_id"))
 
 		if provider == nil || providerData == (models.VcsProviderData{}) {
 			http.NotFound(w, req)
 			return
 		}
 
+		if buildPlan == nil || (models.ProjectBuildPlan{}) == *buildPlan {
+			http.NotFound(w, req)
+			return
+		}
+
 		provider.SetProviderData(providerData)
 
-		webHook := models.VcsHook{}
-		webHook.Branch = branch
-		webHook.Event = `push`
-		webHook.UserId = user.Id
-		webHook.ProjectId = project.Id
+		vcsHook.Branch = req.FormValue("branch")
+		vcsHook.Event = `push`
+		vcsHook.UserId = user.Id
+		vcsHook.ProjectId = project.Id
+		vcsHook.ProjectBuildPlanId = buildPlan.Id
+		vcsHook.HookId = "0"
 
-		if webHook.Save() {
-			hookId := provider.CreateWebHook(webHook, project)
-			webHook.HookId = &hookId
+		// Сохраняем хук первым, для получения его ID, т.к это id нужно указать в callback url хука
+		if vcsHook.Save() {
+			vcsHook.HookId = provider.CreateWebHook(vcsHook, project)
 
-			if *webHook.HookId == "0" || *webHook.HookId == "" || webHook.Save() == false {
-				// TODO: REMOVE HOOK ON PROVIDER
-				webHook.Delete()
+			if vcsHook.HookId == "0" || vcsHook.HookId == "" {
 				message = "Не удалось создать триггер. Пожалуйста попробуйте позже."
+				vcsHook.Delete()
 			} else {
-				http.Redirect(w, req, "/hooks/list?projectId="+strconv.Itoa(int(project.Id)), http.StatusSeeOther)
+				vcsHook.Save()
+
+				http.Redirect(w, req, fmt.Sprintf("/hooks/list?projectId=%d", project.Id), http.StatusSeeOther)
 			}
 		} else {
-			message = "Не удалось сохранить триггер. Пожаолуйста попробуйте позже."
+			message = "Не удалось сохранить триггер. Пожалуйста попробуйте позже."
 		}
 	}
 
 	templates.Render(w, "web/templates/hooks/create.html", HookCreatePage{
-		Project: project,
-		Message: message,
+		Project:    project,
+		VcsHook:    vcsHook,
+		BuildPlans: models.GetProjectBuildPlansByProjectId(project.Id),
+		Message:    message,
 	}, user)
 }
 
@@ -115,9 +116,9 @@ func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, us
 func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 	if http.MethodPost == req.Method {
 		hookId := req.URL.Query().Get("hookId")
-		hook := models.GetHookById(hookId)
+		hook := models.GetVcsHookById(hookId)
 
-		if (models.VcsHook{}) == hook {
+		if hook == nil || *hook == (models.VcsHook{}) {
 			http.NotFound(w, req)
 			return
 		}
@@ -134,7 +135,7 @@ func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 		if strings.Contains(payload.Ref, "/"+hook.Branch) {
 			project := models.GetProjectById(strconv.Itoa(int(hook.ProjectId)))
 
-			if (models.Project{}) == project {
+			if project == nil || (models.Project{}) == *project {
 				http.NotFound(w, req)
 				return
 			}

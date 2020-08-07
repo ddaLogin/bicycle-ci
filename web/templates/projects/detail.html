@@ -68,5 +68,36 @@
                 </div>
             </div>
         </div>
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-bell"></i> Vcs тригеры</h3>
+                <a href="/hooks/create?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-xs float-right">
+                    <i class="fas fa-plus"></i> Добавить новый тригер
+                </a>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th style="width: 10px">#</th>
+                        <th>VCS событие</th>
+                        <th>Целевая ветка</th>
+                        <th>Запускаемая сборка</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {{ range $key, $hook := .Content.VcsHooks }}
+                            <tr>
+                                <th scope="row">{{ $hook.Id }}</th>
+                                <td>{{ $hook.Event }}</td>
+                                <td>{{ $hook.Branch }}</td>
+                                <td>{{ $hook.GetProjectBuildPlan.Title }}</td>
+                            </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 {{end}}

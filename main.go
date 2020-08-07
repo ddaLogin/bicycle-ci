@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/ddalogin/bicycle-ci/auth"
 	database2 "github.com/ddalogin/bicycle-ci/database"
+	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/ssh"
 	"github.com/ddalogin/bicycle-ci/telegram"
 	"github.com/ddalogin/bicycle-ci/vcs/github"
@@ -44,6 +45,7 @@ func main() {
 
 	github.SetConfig(config.Github)
 	database2.SetConfig(config.Db)
+	models.Host = "http://e916cdad6447.ngrok.io"
 	authService := auth.NewService(config.SessionName, config.SessionSecretKey, "/login")
 	sshService := ssh.NewService()
 	telegramService := telegram.NewService(config.Telegram)

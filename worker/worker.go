@@ -21,7 +21,7 @@ func NewService(telegram *telegram.Service, host string, port string) *Service {
 }
 
 // Запускает сборку проекта
-func (s *Service) RunBuild(project models.Project, commits []string) models.Build {
+func (s *Service) RunBuild(project *models.Project, commits []string) models.Build {
 	build := models.Build{
 		ProjectId: project.Id,
 		StartedAt: time.Now().Format("2006-01-02 15:04:05"),
@@ -37,7 +37,7 @@ func (s *Service) RunBuild(project models.Project, commits []string) models.Buil
 }
 
 // Перенести в воркер
-func (s *Service) process(project models.Project, build models.Build) {
+func (s *Service) process(project *models.Project, build models.Build) {
 	//dir, _ := os.Getwd()
 	//
 	//// Стандартный шаг с копированием репозитория
@@ -144,7 +144,7 @@ func (s *Service) runStep(project models.Project, cmd *exec.Cmd, result *models.
 }
 
 // Уведомляет о начале сборки
-func (s *Service) notifyAboutRun(project models.Project, build models.Build, commits []string) {
+func (s *Service) notifyAboutRun(project *models.Project, build models.Build, commits []string) {
 	buildUrl := s.host + "/builds/status?buildId=" + fmt.Sprintf("%v", build.Id)
 	message := `[#` + strconv.Itoa(int(build.Id)) + ` Начата сборка проекта \"` + project.Name + `\".](` + buildUrl + `) \r\n`
 	message = message + "\xE2\x8F\xB3 Приблизительное время сборки: " + project.GetAvgBuildTime() + " \r\n"

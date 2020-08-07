@@ -24,14 +24,15 @@ func NewProjectController(auth *auth.Service, ssh *ssh.Service) *ProjectControll
 
 // Страница списка проектов
 type ProjectListPage struct {
-	Projects []models.Project
+	Projects []*models.Project
 }
 
 // Страница деталей проекта
 type ProjectDetailPage struct {
-	Project     models.Project
+	Project     *models.Project
 	BuildPlans  []*models.ProjectBuildPlan
 	DeployPlans []*models.ProjectDeployPlan
+	VcsHooks    []*models.VcsHook
 }
 
 // Страница активации проектов
@@ -41,21 +42,21 @@ type ProjectEnablePage struct {
 
 // Страница настройки ключей деплоя
 type ProjectDeployPage struct {
-	Project models.Project
+	Project *models.Project
 	Message string
 }
 
 // Страница редактирования плана сборки
 type ProjectBuildPlanPage struct {
-	Project   models.Project
+	Project   *models.Project
 	BuildPlan *models.ProjectBuildPlan
-	Images    []models.DockerImage
+	Images    []*models.DockerImage
 	Message   string
 }
 
 // Страница редактирования плана релиза
 type ProjectDeployPlanPage struct {
-	Project    models.Project
+	Project    *models.Project
 	DeployPlan *models.ProjectDeployPlan
 	Servers    []models.RemoteServer
 	Message    string
@@ -72,7 +73,7 @@ func (c *ProjectController) List(w http.ResponseWriter, req *http.Request, user 
 func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, user models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("id"))
 
-	if (models.Project{}) == project || project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -81,6 +82,7 @@ func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, use
 		Project:     project,
 		BuildPlans:  models.GetProjectBuildPlansByProjectId(project.Id),
 		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
+		VcsHooks:    models.GetVcsHooksByProjectId(project.Id),
 	}, user)
 }
 
@@ -105,7 +107,7 @@ func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user
 
 	for _, value := range models.GetProjectsByUserId(user.Id) {
 		if _, ok := projectsToEnable[value.RepoId]; ok {
-			projectsToEnable[value.RepoId] = &value
+			projectsToEnable[value.RepoId] = value
 		}
 	}
 
@@ -146,7 +148,7 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 	project := models.GetProjectById(projectId)
 	message := ""
 
-	if (models.Project{}) == project || project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -198,11 +200,11 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 // Редактирование/Создание плана сборки
 func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, user models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("projectId"))
-	images := models.GetImages()
+	images := models.GetAllDockerImages()
 	buildPlan := &models.ProjectBuildPlan{}
 	message := ""
 
-	if (models.Project{}) == project || project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -249,7 +251,7 @@ func (c *ProjectController) PlanDeploy(w http.ResponseWriter, req *http.Request,
 	deployPlan := &models.ProjectDeployPlan{}
 	message := ""
 
-	if (models.Project{}) == project || project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}

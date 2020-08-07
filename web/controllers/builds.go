@@ -23,7 +23,7 @@ func NewBuildsController(auth *auth.Service, workerService *worker.Service) *Bui
 
 // Шаблон страницы сборки
 type StatusPage struct {
-	Project models.Project
+	Project *models.Project
 	Output  []models.BuildStep
 	Build   models.Build
 }
@@ -33,7 +33,7 @@ func (c *BuildsController) Run(w http.ResponseWriter, req *http.Request, user mo
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 
-	if (models.Project{}) == project && project.UserId != user.Id {
+	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
@@ -55,7 +55,7 @@ func (c *BuildsController) Status(w http.ResponseWriter, req *http.Request, user
 
 	project := models.GetProjectById(strconv.Itoa(int(build.ProjectId)))
 
-	if (models.Project{}) == project {
+	if project == nil || (models.Project{}) == *project {
 		http.NotFound(w, req)
 		return
 	}

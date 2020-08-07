@@ -172,11 +172,11 @@ func (gh GitHub) LoadProjectToEnable(ownerName string, repoName string) (project
 }
 
 // Загружает на сервер VCS деплой ключ
-func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project models.Project) int {
-	url := fmt.Sprintf("%v/repos/%v/%v/keys", config.ApiHost, project.RepoOwnerName, project.RepoName)
+func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project *models.Project) int {
+	requestUrl := fmt.Sprintf("%v/repos/%v/%v/keys", config.ApiHost, project.RepoOwnerName, project.RepoName)
 	body := []byte(`{"title": "` + keyName + `", "key": "` + strings.TrimSpace(key) + `", "read_only": "true"}`)
 
-	response, err := post(url, body, gh.Data.ProviderAuthToken)
+	response, err := post(requestUrl, body, gh.Data.ProviderAuthToken)
 	if err != nil {
 		return 0
 	}
@@ -199,12 +199,12 @@ func (gh GitHub) UploadProjectDeployKey(keyName string, key string, project mode
 }
 
 // Создает Web Hook в репозитории
-func (gh GitHub) CreateWebHook(webHook models.VcsHook, project models.Project) string {
-	url := fmt.Sprintf("%v/repos/%v/%v/hooks", config.ApiHost, project.RepoOwnerName, project.RepoName)
+func (gh GitHub) CreateWebHook(webHook *models.VcsHook, project *models.Project) string {
+	requestUrl := fmt.Sprintf("%v/repos/%v/%v/hooks", config.ApiHost, project.RepoOwnerName, project.RepoName)
 	config := `{"content_type": "json", "insecure_ssl": "1", "url": "` + webHook.GetTriggerUrl() + `"}`
 	body := []byte(`{"config": ` + config + ` , "events": ["` + strings.TrimSpace(webHook.Event) + `"]}`)
 
-	response, err := post(url, body, gh.Data.ProviderAuthToken)
+	response, err := post(requestUrl, body, gh.Data.ProviderAuthToken)
 	if err != nil {
 		return "0"
 	}

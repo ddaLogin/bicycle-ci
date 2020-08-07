@@ -4,7 +4,7 @@
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-bell"></i> VCS триггер</h3>
             </div>
-            <form role="form" action="/hooks/create?projectId={{ .Content.Project.Id }}" method="post">
+            <form role="form" action="/hooks/create?projectId={{ .Content.Project.Id }}{{ if gt .Content.VcsHook.Id 0 }}&id={{ .Content.VcsHook.Id }} {{ end }}" method="post">
                 <div class="card-body">
                     {{if .Content.Message}}
                         <div class="alert alert-danger" role="alert">{{ .Content.Message }}</div>
@@ -16,6 +16,19 @@
                                 <span class="input-group-text"><i class="fas fa-code-branch"></i></span>
                             </div>
                             <input type="text" class="form-control" id="branch" name="branch" placeholder="master" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="build_image">Запускаемая сборка</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-cogs"></i></span>
+                            </div>
+                            <select class="form-control" id="build_plan_id" name="build_plan_id" required>
+                                {{ range $key, $plan := .Content.BuildPlans }}
+                                    <option value="{{ $plan.Id }}" {{ if eq $.Content.VcsHook.ProjectBuildPlanId $plan.Id }}selected{{ end }}>{{ $plan.Title }}</option>
+                                {{ end }}
+                            </select>
                         </div>
                     </div>
                 </div>
