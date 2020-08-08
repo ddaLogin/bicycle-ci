@@ -14,7 +14,7 @@ type VcsHook struct {
 	Id                 int64  // Идентификатор хука
 	ProjectId          int64  // Проект за которым закреплен хук
 	ProjectBuildPlanId int64  // Проект за которым закреплен хук
-	UserId             int    // Создатель хука
+	UserId             int64  // Создатель хука
 	HookId             string // Идентификатор хука на стороне провайдера
 	Event              string // Тип события при котором хук срабатывает
 	Branch             string // Целевая ветка хука

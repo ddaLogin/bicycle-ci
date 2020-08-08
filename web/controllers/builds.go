@@ -7,7 +7,6 @@ import (
 	"github.com/ddalogin/bicycle-ci/web/templates"
 	"github.com/ddalogin/bicycle-ci/worker"
 	"net/http"
-	"strconv"
 )
 
 // Контроллер сборок
@@ -24,36 +23,41 @@ func NewBuildsController(auth *auth.Service, workerService *worker.Service) *Bui
 // Шаблон страницы сборки
 type StatusPage struct {
 	Project *models.Project
-	Output  []models.BuildStep
-	Build   models.Build
+	Output  []*models.BuildStep
+	Build   *models.Build
 }
 
 // Запуск сборки
-func (c *BuildsController) Run(w http.ResponseWriter, req *http.Request, user models.User) {
-	projectId := req.URL.Query().Get("projectId")
-	project := models.GetProjectById(projectId)
+func (c *BuildsController) Run(w http.ResponseWriter, req *http.Request, user *models.User) {
+	buildPlan := models.GetProjectBuildPlanById(req.URL.Query().Get("id"))
+
+	if buildPlan == nil || (models.ProjectBuildPlan{}) == *buildPlan {
+		http.NotFound(w, req)
+		return
+	}
+
+	project := buildPlan.GetProject()
 
 	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
 		http.NotFound(w, req)
 		return
 	}
 
-	build := c.workerService.RunBuild(project, nil)
+	build := c.workerService.RunBuild(buildPlan, user, nil)
 
-	http.Redirect(w, req, "/builds/status?buildId="+fmt.Sprintf("%v", build.Id), http.StatusSeeOther)
+	http.Redirect(w, req, fmt.Sprintf("/builds/status?buildId=%d", build.Id), http.StatusSeeOther)
 }
 
 // Страница сборки
-func (c *BuildsController) Status(w http.ResponseWriter, req *http.Request, user models.User) {
-	buildId := req.URL.Query().Get("buildId")
-	build := models.GetBuildById(buildId)
+func (c *BuildsController) Status(w http.ResponseWriter, req *http.Request, user *models.User) {
+	build := models.GetBuildById(req.URL.Query().Get("buildId"))
 
-	if (models.Build{}) == build {
+	if build == nil || (models.Build{}) == *build {
 		http.NotFound(w, req)
 		return
 	}
 
-	project := models.GetProjectById(strconv.Itoa(int(build.ProjectId)))
+	project := build.GetProjectBuildPlan().GetProject()
 
 	if project == nil || (models.Project{}) == *project {
 		http.NotFound(w, req)

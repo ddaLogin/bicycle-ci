@@ -19,7 +19,7 @@ func NewIndexController(auth *auth.Service) *IndexController {
 
 // Главная страница
 type IndexPage struct {
-	Builds []models.Build
+	Builds []*models.Build
 }
 
 // Страница авторизации
@@ -28,9 +28,9 @@ type LoginPage struct {
 }
 
 // Главная страница
-func (c *IndexController) Index(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *IndexController) Index(w http.ResponseWriter, req *http.Request, user *models.User) {
 	templates.Render(w, "web/templates/index.html", IndexPage{
-		Builds: models.GetBuildsWithProjects(),
+		Builds: models.GetAllBuilds(),
 	}, user)
 }
 
@@ -52,5 +52,5 @@ func (c *IndexController) Login(w http.ResponseWriter, req *http.Request) {
 		page.Message = "Неверный логин или пароль"
 	}
 
-	templates.Render(w, "web/templates/login.html", page, models.User{})
+	templates.Render(w, "web/templates/login.html", page, &models.User{})
 }

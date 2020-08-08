@@ -33,6 +33,7 @@ type ProjectDetailPage struct {
 	BuildPlans  []*models.ProjectBuildPlan
 	DeployPlans []*models.ProjectDeployPlan
 	VcsHooks    []*models.VcsHook
+	Builds      []*models.Build
 }
 
 // Страница активации проектов
@@ -63,14 +64,14 @@ type ProjectDeployPlanPage struct {
 }
 
 // Страница проектов пользователя
-func (c *ProjectController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) List(w http.ResponseWriter, req *http.Request, user *models.User) {
 	templates.Render(w, "web/templates/projects/list.html", ProjectListPage{
 		Projects: models.GetProjectsByUserId(user.Id),
 	}, user)
 }
 
 // Страница проекта
-func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, user *models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("id"))
 
 	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
@@ -83,11 +84,12 @@ func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, use
 		BuildPlans:  models.GetProjectBuildPlansByProjectId(project.Id),
 		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
 		VcsHooks:    models.GetVcsHooksByProjectId(project.Id),
+		Builds:      models.GetAllBuildsByProjectId(project.Id),
 	}, user)
 }
 
 // Страница выбора репозитория для нового проекта
-func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user *models.User) {
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
 
 	if (models.VcsProviderData{}) == providerData && providerData.UserId != user.Id {
@@ -117,7 +119,7 @@ func (c *ProjectController) Repos(w http.ResponseWriter, req *http.Request, user
 }
 
 // Активация проекта на основе репозитория
-func (c *ProjectController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Create(w http.ResponseWriter, req *http.Request, user *models.User) {
 	repoName := req.URL.Query().Get("repoName")
 	repoOwner := req.URL.Query().Get("repoOwner")
 	providerData := models.GetProviderDataById(req.URL.Query().Get("providerId"))
@@ -143,7 +145,7 @@ func (c *ProjectController) Create(w http.ResponseWriter, req *http.Request, use
 }
 
 // Настройка ключей деплоя
-func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, user *models.User) {
 	projectId := req.URL.Query().Get("projectId")
 	project := models.GetProjectById(projectId)
 	message := ""
@@ -198,13 +200,19 @@ func (c *ProjectController) Deploy(w http.ResponseWriter, req *http.Request, use
 }
 
 // Редактирование/Создание плана сборки
-func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, user *models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("projectId"))
 	images := models.GetAllDockerImages()
 	buildPlan := &models.ProjectBuildPlan{}
 	message := ""
 
 	if project == nil || (models.Project{}) == *project || project.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	// В проекте должны быть настроены ключи для скачивания исходников
+	if project.DeployKeyId == nil || project.DeployPrivate == nil {
 		http.NotFound(w, req)
 		return
 	}
@@ -224,10 +232,10 @@ func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, 
 		imageId, _ := strconv.Atoi(req.FormValue("docker_image"))
 
 		buildPlan.Title = req.FormValue("title")
-		buildPlan.ProjectId = int(project.Id)
+		buildPlan.ProjectId = project.Id
 		buildPlan.BuildInstruction = req.FormValue("plan")
 		buildPlan.Artifact = req.FormValue("artifact")
-		buildPlan.DockerImage = imageId
+		buildPlan.DockerImageId = int64(imageId)
 
 		if buildPlan.Save() {
 			http.Redirect(w, req, fmt.Sprintf("/projects/detail?id=%d", project.Id), http.StatusSeeOther)
@@ -245,7 +253,7 @@ func (c *ProjectController) PlanBuild(w http.ResponseWriter, req *http.Request, 
 }
 
 // Редактирование/Создание деплоймент плана
-func (c *ProjectController) PlanDeploy(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *ProjectController) PlanDeploy(w http.ResponseWriter, req *http.Request, user *models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("projectId"))
 	servers := models.GetAllServers()
 	deployPlan := &models.ProjectDeployPlan{}
@@ -271,7 +279,7 @@ func (c *ProjectController) PlanDeploy(w http.ResponseWriter, req *http.Request,
 		serverId, _ := strconv.Atoi(req.FormValue("remote_server"))
 
 		deployPlan.Title = req.FormValue("title")
-		deployPlan.ProjectId = int(project.Id)
+		deployPlan.ProjectId = project.Id
 		deployPlan.DeploymentDirectory = req.FormValue("deployment_directory")
 
 		if serverId > 0 {

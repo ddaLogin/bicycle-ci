@@ -11,23 +11,35 @@
                         <tr>
                             <th style="width: 10px">#</th>
                             <th>Проект</th>
+                            <th>План сборки</th>
                             <th>Статус сборки</th>
+                            <th>Запустивший пользователь</th>
                             <th>Время начала сборки</th>
                             <th>Время окончания сборки</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{ range $key, $build := .Content.Builds }}
                             <tr>
                                 <th scope="row">{{ $build.Id }}</th>
-                                <td>{{ $build.Project.Name }}</td>
                                 <td>
-                                    <a href="/builds/status?buildId={{ $build.Id }}">
-                                        <span class="badge badge-{{ $build.StatusColor }}">{{ $build.StatusTitle }}</span>
+                                    <a href="/projects/detail?id={{ $build.GetProjectBuildPlan.ProjectId }}">
+                                        {{ $build.GetProjectBuildPlan.GetProject.Name }}
                                     </a>
                                 </td>
+                                <td>{{ $build.GetProjectBuildPlan.Title }}</td>
+                                <td>
+                                    <a href="/builds/status?buildId={{ $build.Id }}">
+                                        <span class="badge badge-{{ $build.GetStatusColor }}">{{ $build.GetStatusTitle }}</span>
+                                    </a>
+                                </td>
+                                <td>{{ $build.GetUser.Login }}</td>
                                 <td>{{ $build.StartedAt }}</td>
                                 <td>{{ if $build.EndedAt }} {{ $build.EndedAt }} {{ end }}</td>
+                                <td>
+                                    <a href="/builds/status?buildId={{ $build.Id }}">Детали сборки</a>
+                                </td>
                             </tr>
                         {{ end }}
                     </tbody>

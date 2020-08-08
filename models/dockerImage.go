@@ -12,7 +12,7 @@ type DockerImage struct {
 	Id          int64
 	Name        string
 	Description string
-	UserId      int
+	UserId      int64
 }
 
 // Создает модель докер контейнера по строке из базы
@@ -52,7 +52,7 @@ func scanDockerImages(rows *sql.Rows) (images []*DockerImage) {
 }
 
 // Получить модель пользователя
-func (img *DockerImage) User() User {
+func (img *DockerImage) User() *User {
 	return GetUserById(strconv.Itoa(int(img.UserId)))
 }
 

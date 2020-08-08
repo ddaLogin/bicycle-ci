@@ -8,12 +8,12 @@ import (
 
 // Базовый темплейт
 type baseTemplate struct {
-	User    models.User
+	User    *models.User
 	Content interface{}
 }
 
 // Выполнение указанного шаблона
-func Render(w http.ResponseWriter, templateFile string, data interface{}, user models.User) {
+func Render(w http.ResponseWriter, templateFile string, data interface{}, user *models.User) {
 	base := baseTemplate{
 		User:    user,
 		Content: data,

@@ -1,0 +1,9 @@
+*{{ .Build.GetProjectBuildPlan.GetProject.Name }}*
+[#{{ .Build.Id }} Запущена сборка - {{ .Build.GetProjectBuildPlan.Title }}]({{ .BuildUrl }})
+
+Среднее время сборки: {{ .Build.GetProjectBuildPlan.GetProject.GetAvgBuildTime }}
+
+{{ if .Commits }}
+    *Комиты попавшие в сборку*:
+    {{ range $key, $commit := .Commits }}{{ $commit }}{{ end }}
+{{ end }}

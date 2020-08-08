@@ -8,30 +8,75 @@
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-cogs"></i> Планы сборок</h3>
 
-                        <a href="/projects/plan/build?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-xs float-right">
-                            <i class="fas fa-plus"></i> Добавить новый план
-                        </a>
+                        {{ if and .Content.Project.DeployKeyId .Content.Project.DeployPrivate }}
+                            <a href="/projects/plan/build?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-xs float-right">
+                                <i class="fas fa-plus"></i> Добавить новый план
+                            </a>
+                        {{ end }}
                     </div>
 
                     <div class="card-body p-0">
-                        <table class="table table-sm">
-                            <thead>
-                            <tr>
-                                <th style="width: 10px">#</th>
-                                <th>Имя сборки</th>
-                                <th>Действия</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                                {{ range $key, $plan := .Content.BuildPlans }}
+
+                        {{ if or (not .Content.Project.DeployKeyId) (not .Content.Project.DeployPrivate) }}
+                            <div class="col text-center">
+                                <br>
+                                <p class="text-info">Перед созданием плана по сборке проекта, необходимо указать ключи для скачивания исходников и вашей VCS</p>
+
+                                <a href="/projects/deploy?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-key"></i> Задать ключи к искходникам
+                                </a>
+                                <br>
+                                <br>
+                            </div>
+                        {{ else }}
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th style="width: 10px">#</th>
+                                    <th>Имя сборки</th>
+                                    <th style="width: 200px">Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{ if .Content.BuildPlans }}
+                                    {{ range $key, $plan := .Content.BuildPlans }}
+                                        <tr>
+                                            <th scope="row">{{ $plan.Id }}</th>
+                                            <td>{{ $plan.Title }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="/builds/run?id={{ $plan.Id }}" class="btn btn-primary btn-xs ">
+                                                        <i class="fas fa-play"></i>
+                                                        Запустить сборку
+                                                    </a>
+                                                    <button type="button" class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <span class="sr-only">Toggle Dropdown</span>
+                                                    </button>
+                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                        <a class="dropdown-item" href="/projects/plan/build?projectId={{ $plan.ProjectId }}&id={{ $plan.Id }}">
+                                                            <i class="fas fa-edit"></i>
+                                                            Редактировать
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {{ end }}
+                                {{ else }}
                                     <tr>
-                                        <th scope="row">{{ $plan.Id }}</th>
-                                        <td>{{ $plan.Title }}</td>
-                                        <td><a href="/projects/plan/build?projectId={{ $plan.ProjectId }}&id={{ $plan.Id }}"> Редакировать </a></td>
+                                        <td colspan="3" class="text-center">
+                                            <br>
+                                            <a href="/projects/plan/build?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-plus"></i> Создай свой первый план сборки
+                                            </a>
+                                            <br>
+                                            <br>
+                                        </td>
                                     </tr>
                                 {{ end }}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        {{ end }}
                     </div>
                 </div>
             </div>
@@ -55,11 +100,24 @@
                             </tr>
                             </thead>
                             <tbody>
-                                {{ range $key, $plan := .Content.DeployPlans }}
+                                {{ if .Content.BuildPlans }}
+                                    {{ range $key, $plan := .Content.DeployPlans }}
+                                        <tr>
+                                            <th scope="row">{{ $plan.Id }}</th>
+                                            <td>{{ $plan.Title }}</td>
+                                            <td><a href="/projects/plan/deploy?projectId={{ $plan.ProjectId }}&id={{ $plan.Id }}"> Редакировать </a></td>
+                                        </tr>
+                                    {{ end }}
+                                {{ else }}
                                     <tr>
-                                        <th scope="row">{{ $plan.Id }}</th>
-                                        <td>{{ $plan.Title }}</td>
-                                        <td><a href="/projects/plan/deploy?projectId={{ $plan.ProjectId }}&id={{ $plan.Id }}"> Редакировать </a></td>
+                                        <td colspan="3" class="text-center">
+                                            <br>
+                                            <a href="/projects/plan/deploy?projectId={{ .Content.Project.Id }}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-plus"></i> Создай свой первый план релиза
+                                            </a>
+                                            <br>
+                                            <br>
+                                        </td>
                                     </tr>
                                 {{ end }}
                             </tbody>
@@ -95,6 +153,54 @@
                                 <td>{{ $hook.GetProjectBuildPlan.Title }}</td>
                             </tr>
                         {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <br>
+        <br>
+        <div class="card card-secondary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-boxes"></i> Последние сборки</h3>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th style="width: 10px">#</th>
+                        <th>Проект</th>
+                        <th>План сборки</th>
+                        <th>Статус сборки</th>
+                        <th>Запустивший пользователь</th>
+                        <th>Время начала сборки</th>
+                        <th>Время окончания сборки</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range $key, $build := .Content.Builds }}
+                        <tr>
+                            <th scope="row">{{ $build.Id }}</th>
+                            <td>
+                                <a href="/projects/detail?id={{ $build.GetProjectBuildPlan.ProjectId }}">
+                                    {{ $build.GetProjectBuildPlan.GetProject.Name }}
+                                </a>
+                            </td>
+                            <td>{{ $build.GetProjectBuildPlan.Title }}</td>
+                            <td>
+                                <a href="/builds/status?buildId={{ $build.Id }}">
+                                    <span class="badge badge-{{ $build.GetStatusColor }}">{{ $build.GetStatusTitle }}</span>
+                                </a>
+                            </td>
+                            <td>{{ $build.GetUser.Login }}</td>
+                            <td>{{ $build.StartedAt }}</td>
+                            <td>{{ if $build.EndedAt }} {{ $build.EndedAt }} {{ end }}</td>
+                            <td>
+                                <a href="/builds/status?buildId={{ $build.Id }}">Детали сборки</a>
+                            </td>
+                        </tr>
+                    {{ end }}
                     </tbody>
                 </table>
             </div>

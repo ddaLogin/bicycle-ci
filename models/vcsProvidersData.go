@@ -8,7 +8,7 @@ import (
 // Модель подлюченного провайдера
 type VcsProviderData struct {
 	Id                   int64  // Идентификатор провайдера
-	UserId               int    // Идентификатор пользователя
+	UserId               int64  // Идентификатор пользователя
 	ProviderType         int    // Тип провайдера
 	ProviderAuthToken    string // Авторизационый токен для АПИ
 	ProviderAccountId    int    // Идентификатор аккаунта на стороне провайдера
@@ -46,7 +46,7 @@ func (pd *VcsProviderData) Save() bool {
 }
 
 // Получение подключенного провайдера пользователя по типу
-func GetProviderDataByUserAndType(userId int, providerType int) (provider VcsProviderData) {
+func GetProviderDataByUserAndType(userId interface{}, providerType int) (provider VcsProviderData) {
 	db := database.Db()
 	defer db.Close()
 

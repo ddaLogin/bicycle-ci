@@ -9,11 +9,13 @@ import (
 // Модель плана сборки проекта
 type ProjectBuildPlan struct {
 	Id               int64  // Идентификатор плана сборки
-	ProjectId        int    // Идентификатор собираемого проекта
+	ProjectId        int64  // Идентификатор собираемого проекта
 	Title            string // Заголовок сборки
-	DockerImage      int    // Docker образ в котором будет выполняться сборка
+	DockerImageId    int64  // Docker образ в котором будет выполняться сборка
 	BuildInstruction string // Инструкции сборки проекта
 	Artifact         string // Цель будущего деплоймента (файл или папка после сборки)
+	project          *Project
+	dockerImage      *DockerImage
 }
 
 // Создает модель плана сборки по строке из базы
@@ -22,7 +24,7 @@ func scanBuildPlan(row *sql.Row) (plan ProjectBuildPlan) {
 		&plan.Id,
 		&plan.ProjectId,
 		&plan.Title,
-		&plan.DockerImage,
+		&plan.DockerImageId,
 		&plan.BuildInstruction,
 		&plan.Artifact,
 	)
@@ -41,7 +43,7 @@ func scanBuildPlans(rows *sql.Rows) (plans []*ProjectBuildPlan) {
 			&plan.Id,
 			&plan.ProjectId,
 			&plan.Title,
-			&plan.DockerImage,
+			&plan.DockerImageId,
 			&plan.BuildInstruction,
 			&plan.Artifact,
 		)
@@ -56,6 +58,24 @@ func scanBuildPlans(rows *sql.Rows) (plans []*ProjectBuildPlan) {
 	return
 }
 
+// Возвращает проект плана
+func (pl *ProjectBuildPlan) GetProject() *Project {
+	if pl.project == nil {
+		pl.project = GetProjectById(pl.ProjectId)
+	}
+
+	return pl.project
+}
+
+// Возвращает докер образ в котором план должен собиратья
+func (pl *ProjectBuildPlan) GetDockerImage() *DockerImage {
+	if pl.dockerImage == nil {
+		pl.dockerImage = GetDockerImageById(pl.DockerImageId)
+	}
+
+	return pl.dockerImage
+}
+
 // Сохранить план сборки
 func (pl *ProjectBuildPlan) Save() bool {
 	db := database.Db()
@@ -64,7 +84,7 @@ func (pl *ProjectBuildPlan) Save() bool {
 	if pl.Id == 0 {
 		result, err := db.Exec(
 			"insert into project_build_plans (project_id, title, docker_image_id, build_instruction, artifact) values (?, ?, ?, ?, ?)",
-			pl.ProjectId, pl.Title, pl.DockerImage, pl.BuildInstruction, pl.Artifact,
+			pl.ProjectId, pl.Title, pl.DockerImageId, pl.BuildInstruction, pl.Artifact,
 		)
 
 		if err != nil {
@@ -80,7 +100,7 @@ func (pl *ProjectBuildPlan) Save() bool {
 	} else {
 		_, err := db.Exec(
 			"UPDATE project_build_plans SET project_id = ?, title = ?, docker_image_id = ?, build_instruction = ?, artifact = ? WHERE id = ?",
-			pl.ProjectId, pl.Title, pl.DockerImage, pl.BuildInstruction, pl.Artifact, pl.Id,
+			pl.ProjectId, pl.Title, pl.DockerImageId, pl.BuildInstruction, pl.Artifact, pl.Id,
 		)
 
 		if err != nil {
@@ -121,4 +141,20 @@ func GetProjectBuildPlansByProjectId(projectId interface{}) []*ProjectBuildPlan 
 	defer rows.Close()
 
 	return scanBuildPlans(rows)
+}
+
+// Возвращает кол-во планов сборок проекта
+func GetProjectBuildPlansCountByProjectId(projectId interface{}) int {
+	db := database.Db()
+	defer db.Close()
+
+	var cnt int
+
+	err := db.QueryRow("SELECT count(*) FROM project_build_plans WHERE project_id = ?", projectId).Scan(&cnt)
+	if err != nil {
+		log.Println("Не удалось кол-во планов сборки проекта")
+		return 0
+	}
+
+	return cnt
 }

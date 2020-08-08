@@ -33,7 +33,7 @@ type ServerCreatePage struct {
 }
 
 // Страница серверов
-func (c *RemoteServerController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *RemoteServerController) List(w http.ResponseWriter, req *http.Request, user *models.User) {
 	templates.Render(w, "web/templates/servers/list.html", ServersListPage{
 		Servers: models.GetAllServers(),
 		Message: "",
@@ -41,7 +41,7 @@ func (c *RemoteServerController) List(w http.ResponseWriter, req *http.Request, 
 }
 
 // Страница создание сервера
-func (c *RemoteServerController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *RemoteServerController) Create(w http.ResponseWriter, req *http.Request, user *models.User) {
 	serverId := req.URL.Query().Get("serverId")
 	buf, _ := strconv.Atoi(serverId)
 	server := models.GetServerById(buf)

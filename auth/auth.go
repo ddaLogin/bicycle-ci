@@ -40,7 +40,7 @@ func (s *Service) Auth(login string, password string, w http.ResponseWriter, req
 	password = s.hashPassword(password)
 	user := models.GetUserByLoginAndPassword(login, password)
 
-	if (models.User{}) != user {
+	if user != nil && (models.User{}) != *user {
 		session, err := s.storage.Get(req, s.sessionName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,11 +64,11 @@ func (s *Service) Auth(login string, password string, w http.ResponseWriter, req
 }
 
 // Мидлеваре авторизации роутов
-func (s *Service) AuthMiddleware(next func(w http.ResponseWriter, req *http.Request, user models.User)) http.Handler {
+func (s *Service) AuthMiddleware(next func(w http.ResponseWriter, req *http.Request, user *models.User)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		user := s.GetCurrentUser(req)
 
-		if (models.User{}) == user {
+		if user == nil || (models.User{}) == *user {
 			http.Redirect(w, req, s.loginRoute, http.StatusSeeOther)
 			return
 		}
@@ -78,7 +78,7 @@ func (s *Service) AuthMiddleware(next func(w http.ResponseWriter, req *http.Requ
 }
 
 // Получить авторизованного пользователя
-func (s *Service) GetCurrentUser(req *http.Request) (currentUser models.User) {
+func (s *Service) GetCurrentUser(req *http.Request) (currentUser *models.User) {
 	session, err := s.storage.Get(req, s.sessionName)
 	if err != nil {
 		log.Println("Не удалось получить сессию", err)
@@ -89,7 +89,7 @@ func (s *Service) GetCurrentUser(req *http.Request) (currentUser models.User) {
 	token := session.Values["token"]
 	user := models.GetUserById(fmt.Sprintf("%v", id))
 
-	if (models.User{}) != user {
+	if user != nil && (models.User{}) != *user {
 		if s.isValidToken(user, fmt.Sprintf("%v", token)) {
 			currentUser = user
 		}
@@ -99,7 +99,7 @@ func (s *Service) GetCurrentUser(req *http.Request) (currentUser models.User) {
 }
 
 // Проверка токена авторизации
-func (s *Service) isValidToken(user models.User, jwtToken string) bool {
+func (s *Service) isValidToken(user *models.User, jwtToken string) bool {
 	token := &Token{}
 
 	tkn, err := jwt.ParseWithClaims(jwtToken, token, func(token *jwt.Token) (interface{}, error) {
@@ -113,7 +113,7 @@ func (s *Service) isValidToken(user models.User, jwtToken string) bool {
 }
 
 // Генерация токена авторизации
-func (s *Service) generateToken(user models.User) (authToken string) {
+func (s *Service) generateToken(user *models.User) (authToken string) {
 	expirationTime := time.Now().Add(120 * time.Minute)
 	token := &Token{
 		userId: fmt.Sprintf("%v", user.Id),

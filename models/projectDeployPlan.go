@@ -9,7 +9,7 @@ import (
 // Модель релиз плана
 type ProjectDeployPlan struct {
 	Id                  int64  // Идентификатор плана релиза
-	ProjectId           int    // Идентификатор релизного проекта
+	ProjectId           int64  // Идентификатор релизного проекта
 	Title               string // Заголовок релиз плана (test/production/staging)
 	RemoteServerId      *int   // Сервер для удаленного деплоя, null = local
 	DeploymentDirectory string // Папка на удаленном сервере, куда будет развернут проект после деплоймента
@@ -118,4 +118,20 @@ func GetProjectDeployPlansByProjectId(projectId interface{}) []*ProjectDeployPla
 	defer rows.Close()
 
 	return scanDeployPlans(rows)
+}
+
+// Возвращает кол-во релиз планов проекта
+func GetProjectDeployPlansCountByProjectId(projectId interface{}) int {
+	db := database.Db()
+	defer db.Close()
+
+	var cnt int
+
+	err := db.QueryRow("SELECT count(*) FROM project_deploy_plans WHERE project_id = ?", projectId).Scan(&cnt)
+	if err != nil {
+		log.Println("Не удалось посчитать кол-во релиз планов проекта")
+		return 0
+	}
+
+	return cnt
 }

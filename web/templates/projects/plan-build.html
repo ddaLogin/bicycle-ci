@@ -26,7 +26,7 @@
                             </div>
                             <select class="form-control" id="build_image" name="docker_image" required>
                                 {{ range $key, $image := .Content.Images }}
-                                    <option value="{{ $image.Id }}" {{ if RefEq $.Content.BuildPlan.DockerImage $image.Id }}selected{{ end }}>{{ $image.Name }}</option>
+                                    <option value="{{ $image.Id }}" {{ if RefEq $.Content.BuildPlan.DockerImageId $image.Id }}selected{{ end }}>{{ $image.Name }}</option>
                                 {{ end }}
                             </select>
                         </div>

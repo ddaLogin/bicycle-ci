@@ -29,14 +29,14 @@ type ImageCreatePage struct {
 }
 
 // Страница образов
-func (c *DockerImagesController) List(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *DockerImagesController) List(w http.ResponseWriter, req *http.Request, user *models.User) {
 	templates.Render(w, "web/templates/images/list.html", ImagesListPage{
 		Images: models.GetAllDockerImages(),
 	}, user)
 }
 
 // Страница создания/редактирования образа
-func (c *DockerImagesController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *DockerImagesController) Create(w http.ResponseWriter, req *http.Request, user *models.User) {
 	imageId := req.URL.Query().Get("imageId")
 	image := models.GetDockerImageById(imageId)
 	message := ""

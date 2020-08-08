@@ -14,7 +14,7 @@ const StatusReady = 2       // Готов к сборке
 // Модель проекта
 type Project struct {
 	Id            int64   // Идентификатор проекта
-	UserId        int     // Владелец проекта
+	UserId        int64   // Владелец проекта
 	Name          string  // Имя проекта
 	Provider      int64   // Идентификатор провайдера репозитория
 	RepoId        int     // Идентификатор репозитория
@@ -23,6 +23,7 @@ type Project struct {
 	RepoOwnerId   string  // Идентификатор владельца репозитория
 	DeployKeyId   *int    // Идентификатор ключа деплоя
 	DeployPrivate *string // Приватный SSH ключ
+	user          *User
 }
 
 // Создает модель проекта по строке из базы
@@ -73,9 +74,23 @@ func scanProjects(rows *sql.Rows) (projects []*Project) {
 	return
 }
 
-// Получить модель Docker образа
-func (pr *Project) Image() *DockerImage {
-	return GetDockerImageById(1)
+// Возвращает пользователя создавшего проект
+func (pr *Project) GetUser() *User {
+	if pr.user == nil {
+		pr.user = GetUserById(pr.UserId)
+	}
+
+	return pr.user
+}
+
+// Возвращает кол-во планов сборок проекта
+func (pr *Project) GetBuildPlanCount() int {
+	return GetProjectBuildPlansCountByProjectId(pr.Id)
+}
+
+// Возвращает кол-во релиз планов проекта
+func (pr *Project) GetDeployPlanCount() int {
+	return GetProjectDeployPlansCountByProjectId(pr.Id)
 }
 
 // Получить статус проекта
@@ -192,7 +207,7 @@ func (pr Project) GetAvgBuildTime() string {
 	db := database.Db()
 	defer db.Close()
 
-	err := db.QueryRow("select COALESCE(RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5), '') from builds WHERE project_id = ?", pr.Id).Scan(&time)
+	err := db.QueryRow("select COALESCE(RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5), '') from builds WHERE project_build_plan_id = ?", pr.Id).Scan(&time)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Println("Не удалось получить среднее время сборки проекта", err)

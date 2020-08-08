@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"github.com/ddalogin/bicycle-ci/database"
 	"log"
 )
@@ -18,49 +19,54 @@ type BuildStep struct {
 	StdErr  string
 	Error   string
 	Status  int
+	build   *Build
 }
 
-// Сохранить Шаг
-func (st *BuildStep) Save() bool {
-	db := database.Db()
-	defer db.Close()
-
-	if st.Id == 0 {
-		result, err := db.Exec("insert into build_steps (build_id, `name`, std_out, std_err, error, status) values (?, ?, ?, ?, ?, ?)",
-			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status)
-		if err != nil {
-			log.Println("Can't insert step. ", err, st)
-			return false
-		}
-
-		st.Id, _ = result.LastInsertId()
-
-		return true
-	} else {
-		_, err := db.Exec("UPDATE build_steps SET build_id = ?, `name` = ?, std_out = ?, std_err = ?, error = ?, status = ? WHERE id = ?",
-			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status, st.Id)
-		if err != nil {
-			log.Println("Can't update step. ", err, st)
-			return false
-		}
-
-		return true
+// Возвращает модель процесса всей сборки
+func (st *BuildStep) GetBuild() *Build {
+	if st.build == nil {
+		st.SetBuild(GetBuildById(st.BuildId))
 	}
 
-	return false
+	return st.build
 }
 
-// Получить шаги билда
-func GetStepsByBuildId(buildId int64) (steps []BuildStep) {
-	db := database.Db()
-	defer db.Close()
-	rows, err := db.Query("SELECT * FROM build_steps WHERE build_id = ?", buildId)
+// Устанавливает модель процесса всей сборки
+func (st *BuildStep) SetBuild(build *Build) {
+	st.build = build
+}
+
+// Возвращает человекопонятное описание статуса шага
+func (st *BuildStep) GetStatusTitle() string {
+	if st.Status == StepStatusFailed {
+		return "Остановлен с ошибкой"
+	} else if st.Status == StepStatusSuccess {
+		return "Успешно"
+	}
+
+	return "В процессе"
+}
+
+// Создает модель шага сборки по строке из базы
+func scanBuildStep(row *sql.Row) (step BuildStep) {
+	err := row.Scan(
+		&step.Id,
+		&step.BuildId,
+		&step.Name,
+		&step.StdOut,
+		&step.StdErr,
+		&step.Error,
+		&step.Status,
+	)
 	if err != nil {
-		log.Println("Can't get steps by build id. ", err)
-		return
+		log.Println("Не удалось собрать модель шага сборки", row)
 	}
-	defer rows.Close()
 
+	return
+}
+
+// Создает массив моделей шага сборки по строкам из базы
+func scanBuildSteps(rows *sql.Rows) (steps []*BuildStep) {
 	for rows.Next() {
 		step := BuildStep{}
 		err := rows.Scan(
@@ -73,12 +79,63 @@ func GetStepsByBuildId(buildId int64) (steps []BuildStep) {
 			&step.Status,
 		)
 		if err != nil {
-			log.Println("Can't scan steps by build id. ", err)
-			continue
+			log.Println("Не удалось собрать модель шага сборки из массива строк", err)
+			return
 		}
 
-		steps = append(steps, step)
+		steps = append(steps, &step)
 	}
 
 	return
+}
+
+// Сохранить шаг сборки
+func (st *BuildStep) Save() bool {
+	db := database.Db()
+	defer db.Close()
+
+	if st.Id == 0 {
+		result, err := db.Exec(
+			"insert into build_steps (build_id, `name`, std_out, std_err, error, status) values (?, ?, ?, ?, ?, ?)",
+			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status,
+		)
+
+		if err != nil {
+			log.Println("Не удалось сохранить новый шаг сборки", err, st)
+			return false
+		}
+
+		st.Id, err = result.LastInsertId()
+		if err != nil {
+			log.Println("Не удалось получить ID нового шага сборки", err, st)
+			return false
+		}
+	} else {
+		_, err := db.Exec(
+			"UPDATE build_steps SET build_id = ?, `name` = ?, std_out = ?, std_err = ?, error = ?, status = ? WHERE id = ?",
+			st.BuildId, st.Name, st.StdOut, st.StdErr, st.Error, st.Status, st.Id,
+		)
+
+		if err != nil {
+			log.Println("Не удалось обновить шаг сборки", err, st)
+			return false
+		}
+	}
+
+	return true
+}
+
+// Получить шаги билда
+func GetStepsByBuildId(buildId interface{}) []*BuildStep {
+	db := database.Db()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM build_steps WHERE build_id = ?", buildId)
+	if err != nil {
+		log.Println("Не удалось найти все докер образы")
+		return nil
+	}
+	defer rows.Close()
+
+	return scanBuildSteps(rows)
 }

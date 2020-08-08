@@ -42,7 +42,7 @@ type HookCreatePage struct {
 }
 
 // Страница создания/редактирования хука
-func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, user models.User) {
+func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, user *models.User) {
 	project := models.GetProjectById(req.URL.Query().Get("projectId"))
 	message := ""
 	vcsHook := &models.VcsHook{}
@@ -116,9 +116,9 @@ func (c *VcsHooksController) Create(w http.ResponseWriter, req *http.Request, us
 func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 	if http.MethodPost == req.Method {
 		hookId := req.URL.Query().Get("hookId")
-		hook := models.GetVcsHookById(hookId)
+		vcsHook := models.GetVcsHookById(hookId)
 
-		if hook == nil || *hook == (models.VcsHook{}) {
+		if vcsHook == nil || *vcsHook == (models.VcsHook{}) {
 			http.NotFound(w, req)
 			return
 		}
@@ -127,13 +127,13 @@ func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
 		err := decoder.Decode(&payload)
 		if err != nil {
-			log.Print("Не удалось прочитать vcs web hook. ", err, payload)
+			log.Print("Не удалось прочитать vcs web vcsHook. ", err, payload)
 			http.NotFound(w, req)
 			return
 		}
 
-		if strings.Contains(payload.Ref, "/"+hook.Branch) {
-			project := models.GetProjectById(strconv.Itoa(int(hook.ProjectId)))
+		if strings.Contains(payload.Ref, "/"+vcsHook.Branch) {
+			project := models.GetProjectById(strconv.Itoa(int(vcsHook.ProjectId)))
 
 			if project == nil || (models.Project{}) == *project {
 				http.NotFound(w, req)
@@ -148,7 +148,7 @@ func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			c.workerService.RunBuild(project, commits)
+			c.workerService.RunBuild(vcsHook.GetProjectBuildPlan(), nil, commits)
 
 			w.WriteHeader(200)
 			return

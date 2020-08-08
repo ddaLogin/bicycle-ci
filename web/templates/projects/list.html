@@ -14,8 +14,9 @@
                     <tr>
                         <th style="width: 10px">#</th>
                         <th>Имя проекта</th>
-                        <th>Статус</th>
-{{/*                        <th>Действия</th>*/}}
+                        <th>Пользователь</th>
+                        <th>Кол-во планов по сборке</th>
+                        <th>Кол-во релиз планов</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -23,35 +24,9 @@
                         <tr>
                             <th scope="row">{{ $project.Id }}</th>
                             <td><a href="/projects/detail?id={{ $project.Id }}">{{ $project.Name }}</a></td>
-                            <td>
-{{/*                                <span class="badge badge-{{ $project.StatusColor }}">{{ $project.StatusTitle }}</span>*/}}
-                            </td>
-{{/*                            <td>*/}}
-{{/*                                <div class="btn-group">*/}}
-{{/*                                    {{ if (lt $project.Status 3) }} disabled {{ end }}*/}}
-{{/*                                    <a href="/builds/run?projectId={{ $project.Id }}" class="btn btn-primary btn-xs ">*/}}
-{{/*                                        <i class="fas fa-play"></i> Собрать*/}}
-{{/*                                    </a>*/}}
-{{/*                                    <button type="button" class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">*/}}
-{{/*                                        <span class="sr-only">Toggle Dropdown</span>*/}}
-{{/*                                    </button>*/}}
-{{/*                                    <div class="dropdown-menu dropdown-menu-right">*/}}
-{{/*                                        <a class="dropdown-item" href="/projects/plan?projectId={{ $project.Id }}">*/}}
-{{/*                                            <i class="fas fa-cogs"></i>*/}}
-{{/*                                            План сборки*/}}
-{{/*                                        </a>*/}}
-{{/*                                        <div class="dropdown-divider"></div>*/}}
-{{/*                                        <a class="dropdown-item" href="/projects/deploy?projectId={{ $project.Id }}">*/}}
-{{/*                                            <i class="fas fa-key"></i>*/}}
-{{/*                                            VCS ключи*/}}
-{{/*                                        </a>*/}}
-{{/*                                        <a class="dropdown-item" href="/hooks/list?projectId={{ $project.Id }}">*/}}
-{{/*                                            <i class="fas fa-bell"></i>*/}}
-{{/*                                            VCS триггеры*/}}
-{{/*                                        </a>*/}}
-{{/*                                    </div>*/}}
-{{/*                                </div>*/}}
-{{/*                            </td>*/}}
+                            <td>{{ $project.GetUser.Login }}</td>
+                            <td>{{ $project.GetBuildPlanCount }}</td>
+                            <td>{{ $project.GetDeployPlanCount }}</td>
                         </tr>
                     {{ end }}
                     </tbody>
