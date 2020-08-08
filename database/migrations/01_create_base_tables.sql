@@ -1,4 +1,4 @@
-create table servers
+create table remote_servers
 (
     id             int auto_increment
         primary key,
@@ -14,14 +14,13 @@ create table users
     id       int auto_increment
         primary key,
     login    varchar(255) not null,
-    password text         not null,
-    salt     text         not null,
+    password mediumtext   not null,
+    salt     mediumtext   not null,
     constraint users_login_uindex
         unique (login)
-)
-    comment 'Пользователи' charset = utf8;
+) comment 'Пользователи' charset = utf8;;
 
-create table images
+create table docker_images
 (
     id          int auto_increment
         primary key,
@@ -32,7 +31,7 @@ create table images
         foreign key (user_id) references users (id)
 ) charset = utf8;
 
-create table providers
+create table vcs_providers
 (
     id                     int auto_increment
         primary key,
@@ -45,8 +44,7 @@ create table providers
         unique (user_id, provider_type),
     constraint providers_users_id_fk
         foreign key (user_id) references users (id)
-)
-    comment 'VCS системы пользователей' charset = utf8;
+) comment 'VCS системы пользователей' charset = utf8;
 
 create table projects
 (
@@ -61,11 +59,6 @@ create table projects
     repo_owner_id   varchar(255) not null,
     deploy_key_id   int          null,
     deploy_private  text         null,
-    build_image     int          null,
-    build_plan      text         null,
-    artifact_dir    varchar(250) null,
-    server_id       int          null,
-    deploy_dir      varchar(250) null,
     constraint projects_name_uindex
         unique (name),
     constraint projects_providers_id_fk
@@ -74,34 +67,39 @@ create table projects
         foreign key (user_id) references users (id)
 ) charset = utf8;
 
-create table builds
+create table project_build_plans
 (
-    id         int auto_increment
+    id                int auto_increment
         primary key,
-    project_id int                                 not null,
-    status     int       default 0                 not null,
-    started_at timestamp default CURRENT_TIMESTAMP not null,
-    ended_at   timestamp                           null,
-    constraint builds_projects_id_fk
+    project_id        int            not null,
+    title             varbinary(255) not null,
+    docker_image_id   int            not null,
+    build_instruction text           not null,
+    artifact          varchar(255)   not null,
+    constraint project_build_plans_project_id_title_uindex
+        unique (project_id, title),
+    constraint project_build_plans_images_id_fk
+        foreign key (docker_image_id) references docker_images (id),
+    constraint project_build_plans_projects_id_fk
         foreign key (project_id) references projects (id)
 ) charset = utf8;
 
-create table hooks
+create table builds
 (
-    id         int auto_increment
+    id                    int auto_increment
         primary key,
-    project_id int          not null,
-    user_id    int          not null,
-    hook_id    varchar(150) null comment 'идентификатор хука на стороне провайдера',
-    event      varchar(250) not null comment 'Событие при котором вызывается hook',
-    branch     varchar(250) not null comment 'Ветка к которой привязан hook',
-    constraint hooks_projects_id_fk
-        foreign key (project_id) references projects (id),
-    constraint hooks_users_id_fk
+    project_build_plan_id int                                 not null,
+    user_id               int                                 not null,
+    status                int       default 0                 not null,
+    started_at            timestamp default CURRENT_TIMESTAMP not null,
+    ended_at              timestamp                           null,
+    constraint builds_project_build_plans_id_fk
+        foreign key (project_build_plan_id) references project_build_plans (id),
+    constraint builds_users_id_fk
         foreign key (user_id) references users (id)
 ) charset = utf8;
 
-create table steps
+create table build_steps
 (
     id       int auto_increment
         primary key,
@@ -113,4 +111,38 @@ create table steps
     status   int          not null,
     constraint steps_builds_id_fk
         foreign key (build_id) references builds (id)
+) charset = utf8;
+
+create table project_deploy_plans
+(
+    id                   int auto_increment
+        primary key,
+    project_id           int          not null,
+    title                varchar(255) not null,
+    remote_server_id     int          null,
+    deployment_directory varchar(255) not null,
+    constraint project_deploy_plans_project_id_title_uindex
+        unique (project_id, title),
+    constraint project_deploy_plans_projects_id_fk
+        foreign key (project_id) references projects (id),
+    constraint project_deploy_plans_servers_id_fk
+        foreign key (remote_server_id) references remote_servers (id)
+) charset = utf8;
+
+create table vcs_hooks
+(
+    id                    int auto_increment
+        primary key,
+    project_id            int          not null,
+    project_build_plan_id int          not null,
+    user_id               int          not null,
+    hook_id               varchar(150) not null comment 'идентификатор хука на стороне провайдера',
+    event                 varchar(250) not null comment 'Событие при котором вызывается hook',
+    branch                varchar(250) not null comment 'Ветка к которой привязан hook',
+    constraint hooks_projects_id_fk
+        foreign key (project_id) references projects (id),
+    constraint hooks_users_id_fk
+        foreign key (user_id) references users (id),
+    constraint vcs_hooks_project_build_plans_id_fk
+        foreign key (project_build_plan_id) references project_build_plans (id)
 ) charset = utf8;
