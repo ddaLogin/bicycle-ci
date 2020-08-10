@@ -23,7 +23,7 @@ func NewBuildsController(auth *auth.Service, workerService *worker.Service) *Bui
 // Шаблон страницы сборки
 type StatusPage struct {
 	Project *models.Project
-	Output  []*models.BuildStep
+	Steps   []*models.BuildStep
 	Build   *models.Build
 }
 
@@ -68,7 +68,25 @@ func (c *BuildsController) Status(w http.ResponseWriter, req *http.Request, user
 
 	templates.Render(w, "web/templates/status.html", StatusPage{
 		Project: project,
-		Output:  steps,
+		Steps:   steps,
 		Build:   build,
 	}, user)
+}
+
+// Метод для скачивания архива артефактов сборки
+func (c *BuildsController) Artifact(w http.ResponseWriter, req *http.Request, user *models.User) {
+	build := models.GetBuildById(req.URL.Query().Get("id"))
+
+	if build == nil || (models.Build{}) == *build || build.UserId != user.Id {
+		http.NotFound(w, req)
+		return
+	}
+
+	if build.IsArtifactExists() == false {
+		http.NotFound(w, req)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/zip")
+	http.ServeFile(w, req, "builds/"+build.GetArtifactName())
 }

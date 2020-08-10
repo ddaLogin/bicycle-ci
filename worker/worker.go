@@ -113,7 +113,7 @@ func (s *Service) process(build models.Build) {
 
 	cleanStep := models.BuildStep{
 		BuildId: build.Id,
-		Name:    "Удаление артефактов",
+		Name:    "Очистка",
 		Status:  models.StepStatusRunning,
 	}
 	cleanStep.SetBuild(&build)
@@ -145,7 +145,7 @@ func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
 	env = append(env, fmt.Sprintf("NAME=%s", project.Name))
 	env = append(env, fmt.Sprintf("SSH_KEY=%s", *project.DeployPrivate))
 	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", buildPlan.Artifact))
-	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%d_%d_%d", project.Id, buildPlan.Id, result.BuildId))
+	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%s", "builds/"+result.GetBuild().GetArtifactName()))
 
 	//env = append(env, "DEPLOY_DIR="+strings.TrimSpace(*project.DeployDir))
 

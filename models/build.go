@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/ddalogin/bicycle-ci/database"
 	"log"
+	"os"
 	"text/template"
+	"time"
 )
 
 const StatusRunning = 0 // Сборка в процессе
@@ -77,6 +79,39 @@ func scanBuilds(rows *sql.Rows) (builds []*Build) {
 	}
 
 	return
+}
+
+// Возвращает имя и путь для артефактов сборки
+func (bld *Build) GetArtifactName() string {
+	return fmt.Sprintf("artifact_%d_%d_%d.zip", bld.GetProjectBuildPlan().ProjectId, bld.ProjectBuildPlanId, bld.Id)
+}
+
+// Проверяет существует ли файл артефактов сборки
+func (bld *Build) IsArtifactExists() bool {
+	info, err := os.Stat("builds/" + bld.GetArtifactName())
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+// Получить план сборки
+func (bld *Build) GetProcessTime() string {
+	if bld.EndedAt == nil {
+		return ""
+	}
+
+	st, err := time.Parse("2006-01-02 15:04:05", bld.StartedAt)
+	if err != nil {
+		log.Fatal("Не удалось распарсить время начала сборки")
+	}
+
+	en, err := time.Parse("2006-01-02 15:04:05", *bld.EndedAt)
+	if err != nil {
+		log.Fatal("Не удалось распарсить время завершения сборки")
+	}
+
+	return en.Sub(st).String()
 }
 
 // Получить план сборки

@@ -1,0 +1,10 @@
+FROM mhart/alpine-node:12
+
+RUN mkdir /app
+RUN chmod 777 /app
+
+RUN mkdir /.npm
+RUN chmod 777 /.npm
+
+COPY ./scripts/build.sh /build.sh
+RUN chmod 777 /build.sh
