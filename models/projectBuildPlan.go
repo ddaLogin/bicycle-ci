@@ -112,6 +112,25 @@ func (pl *ProjectBuildPlan) Save() bool {
 	return true
 }
 
+// Получить среднее время выполнения плана сборки
+func (pl *ProjectBuildPlan) GetAvgBuildTime() string {
+	var time string
+	db := database.Db()
+	defer db.Close()
+
+	err := db.QueryRow("select COALESCE(RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5), '') from builds WHERE project_build_plan_id = ?", pl.Id).Scan(&time)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Println("Не удалось получить среднее время выполнения плана сборки", err)
+		time = ""
+	case err != nil:
+		log.Println("Ошибка при получение среднего времени выполнения плана сборки", err)
+		time = ""
+	}
+
+	return time
+}
+
 // Получить план сборки по id
 func GetProjectBuildPlanById(id interface{}) *ProjectBuildPlan {
 	db := database.Db()

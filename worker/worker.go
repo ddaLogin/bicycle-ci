@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"github.com/ddalogin/bicycle-ci/models"
 	"github.com/ddalogin/bicycle-ci/telegram"
+	"io"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -14,13 +17,14 @@ import (
 
 // Сервик запуска сборок
 type Service struct {
-	telegram *telegram.Service
-	host     string
+	telegram        *telegram.Service
+	host            string
+	artifactPerPlan int // Максимальное кол-во сохраняемый архивов на 1 билдплан
 }
 
 // Конструктор сервиса запуска сборок
-func NewService(telegram *telegram.Service, host string, port string) *Service {
-	return &Service{telegram: telegram, host: host + ":" + port}
+func NewService(telegram *telegram.Service, host string, port string, artifactPerPlan int) *Service {
+	return &Service{telegram: telegram, host: host + ":" + port, artifactPerPlan: artifactPerPlan}
 }
 
 // Запускает сборку проекта
@@ -35,6 +39,8 @@ func (s *Service) RunBuild(buildPlan *models.ProjectBuildPlan, user *models.User
 
 	s.telegram.SendMessage(build.GetStartMessage(s.host, commits))
 	go s.process(build)
+
+	s.clearOldArtifacts(s.artifactPerPlan, &build)
 
 	return build
 }
@@ -57,7 +63,7 @@ func (s *Service) process(build models.Build) {
 	cloneStep.Save()
 
 	var buildStep models.BuildStep
-	if cloneStep.Error == "" {
+	if cloneStep.Status == models.StepStatusSuccess {
 		// Запускаем сборку
 		buildStep = models.BuildStep{
 			BuildId: build.Id,
@@ -68,9 +74,23 @@ func (s *Service) process(build models.Build) {
 		buildStep.Save()
 		reg := regexp.MustCompile("\r\n")
 		instructions := reg.ReplaceAllString(plan.BuildInstruction, " ")
-		buildCmd := exec.Command("bash", "-c", "docker run -u 1000:1000 -v "+dir+"/builds/project-"+strconv.Itoa(int(plan.ProjectId))+":/app "+plan.GetDockerImage().Name+" sh /build.sh '"+instructions+"'")
+		buildCmd := exec.Command("bash", "-c", "docker run -v "+dir+"/builds/project-"+strconv.Itoa(int(plan.ProjectId))+":/app "+plan.GetDockerImage().Name+" sh /build.sh '"+instructions+"'")
 		s.runStep(buildCmd, &buildStep)
 		buildStep.Save()
+	}
+
+	var artifactStep models.BuildStep
+	if buildStep.Status == models.StepStatusSuccess {
+		artifactStep = models.BuildStep{
+			BuildId: build.Id,
+			Name:    "Упаковка артефактов",
+			Status:  models.StepStatusRunning,
+		}
+		artifactStep.SetBuild(&build)
+		artifactStep.Save()
+
+		s.runStep(exec.Command("bash", "./worker/scripts/packaging.sh"), &artifactStep)
+		artifactStep.Save()
 	}
 
 	//var deployStep models.BuildStep
@@ -101,7 +121,7 @@ func (s *Service) process(build models.Build) {
 	s.runStep(exec.Command("bash", "./worker/scripts/clear.sh"), &cleanStep)
 	cleanStep.Save()
 
-	if cloneStep.Status == models.StepStatusSuccess && buildStep.Status == models.StepStatusSuccess && cleanStep.Status == models.StepStatusSuccess {
+	if cloneStep.Status == models.StepStatusSuccess && buildStep.Status == models.StepStatusSuccess && cleanStep.Status == models.StepStatusSuccess && artifactStep.Status == models.StepStatusSuccess {
 		build.Status = models.StatusSuccess
 	} else {
 		build.Status = models.StatusFailed
@@ -112,17 +132,20 @@ func (s *Service) process(build models.Build) {
 	build.Save()
 
 	s.telegram.SendMessage(build.GetCompleteMessage(s.host))
+
 }
 
 // Выполнить этап билда
 func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
-	project := result.GetBuild().GetProjectBuildPlan().GetProject()
+	buildPlan := result.GetBuild().GetProjectBuildPlan()
+	project := buildPlan.GetProject()
 	var stdout, stderr bytes.Buffer
 	var env []string
 	env = append(env, fmt.Sprintf("ID=%d", project.Id))
 	env = append(env, fmt.Sprintf("NAME=%s", project.Name))
 	env = append(env, fmt.Sprintf("SSH_KEY=%s", *project.DeployPrivate))
-	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", result.GetBuild().GetProjectBuildPlan().Artifact))
+	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", buildPlan.Artifact))
+	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%d_%d_%d", project.Id, buildPlan.Id, result.BuildId))
 
 	//env = append(env, "DEPLOY_DIR="+strings.TrimSpace(*project.DeployDir))
 
@@ -134,14 +157,19 @@ func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
 	//}
 
 	cmd.Env = env
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
+	cmd.Stderr = io.MultiWriter(os.Stdout, &stderr)
 	err := cmd.Run()
 	if err != nil {
 		result.Error = err.Error()
 		result.Status = models.StepStatusFailed
 	}
-	cmd.Wait()
+
+	err = cmd.Wait()
+	if err != nil {
+		log.Println("Выполнение шага завершилось с ошибкой", err, cmd)
+	}
+
 	result.StdOut = string(stdout.Bytes())
 	result.StdErr = string(stderr.Bytes())
 
@@ -150,4 +178,23 @@ func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
 	}
 
 	return
+}
+
+// Удаляет старые артефакты билд плана, если их больше максимума
+func (s *Service) clearOldArtifacts(maxCount int, build *models.Build) {
+	pattern := fmt.Sprintf("builds/artifact_%d_%d_*.zip", build.GetProjectBuildPlan().ProjectId, build.ProjectBuildPlanId)
+
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if len(matches) > maxCount {
+		for _, file := range matches[:len(matches)-maxCount] {
+			err := os.Remove(file)
+			if err != nil {
+				log.Fatal("Не удалось удалить старый артефакт сборки", err)
+			}
+		}
+	}
 }

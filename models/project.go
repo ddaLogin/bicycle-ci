@@ -200,22 +200,3 @@ func GetProjectById(id interface{}) *Project {
 
 	return &project
 }
-
-// Получить проект по идентификатору
-func (pr Project) GetAvgBuildTime() string {
-	var time string
-	db := database.Db()
-	defer db.Close()
-
-	err := db.QueryRow("select COALESCE(RIGHT(SEC_TO_TIME(ROUND(AVG(TIMESTAMPDIFF(SECOND , started_at, ended_at)))), 5), '') from builds WHERE project_build_plan_id = ?", pr.Id).Scan(&time)
-	switch {
-	case err == sql.ErrNoRows:
-		log.Println("Не удалось получить среднее время сборки проекта", err)
-		time = ""
-	case err != nil:
-		log.Println("Ошибка при получение среднего времени сборки", err)
-		time = ""
-	}
-
-	return time
-}

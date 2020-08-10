@@ -20,12 +20,12 @@ func Render(w http.ResponseWriter, templateFile string, data interface{}, user *
 	}
 
 	view, _ := template.New("").Funcs(template.FuncMap{
-		"RefEq": func(i *int, j int64) bool {
+		"RefEq": func(i *int64, j int64) bool {
 			if i == nil {
 				return false
 			}
 
-			return *i == int(j)
+			return *i == j
 		},
 	}).ParseFiles(templateFile, "web/templates/base.html")
 

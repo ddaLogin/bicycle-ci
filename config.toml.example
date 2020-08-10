@@ -1,5 +1,6 @@
 sessionName = "bicycle-session"
 sessionSecretKey = "" #random string like TkT)#}!A74{~pnj?
+maxArtifactsPerPlan = 2 # Максимальое кол-во сохраняемых сборок на 1 билдплан
 
 [web]
 host = "0.0.0.0"

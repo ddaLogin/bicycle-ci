@@ -17,12 +17,13 @@ import (
 )
 
 type Config struct {
-	SessionName      string
-	SessionSecretKey string
-	Web              web.Config
-	Db               database2.Config
-	Github           github.Config
-	Telegram         telegram.Config
+	SessionName         string
+	SessionSecretKey    string
+	MaxArtifactsPerPlan int
+	Web                 web.Config
+	Db                  database2.Config
+	Github              github.Config
+	Telegram            telegram.Config
 }
 
 func main() {
@@ -49,7 +50,7 @@ func main() {
 	authService := auth.NewService(config.SessionName, config.SessionSecretKey, "/login")
 	sshService := ssh.NewService()
 	telegramService := telegram.NewService(config.Telegram)
-	workerService := worker.NewService(telegramService, config.Web.Host, config.Web.Port)
+	workerService := worker.NewService(telegramService, config.Web.Host, config.Web.Port, config.MaxArtifactsPerPlan)
 
 	server := web.NewServer(config.Web, authService, sshService, workerService)
 	server.Run()
