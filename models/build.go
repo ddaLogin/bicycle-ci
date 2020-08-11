@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-const StatusRunning = 0 // Сборка в процессе
-const StatusSuccess = 1 // Сборка прошла успешно
-const StatusFailed = 2  // Сборка завершилась с ошибкой
+const BuildStatusRunning = 0 // Сборка в процессе
+const BuildStatusSuccess = 1 // Сборка прошла успешно
+const BuildStatusFailed = 2  // Сборка завершилась с ошибкой
 
 // Модель сборки проекта
 type Build struct {
@@ -95,7 +95,7 @@ func (bld *Build) IsArtifactExists() bool {
 	return !info.IsDir()
 }
 
-// Получить план сборки
+// Получить продолжительность сборки
 func (bld *Build) GetProcessTime() string {
 	if bld.EndedAt == nil {
 		return ""
@@ -135,11 +135,11 @@ func (bld *Build) GetUser() *User {
 // Хелпер для рендера названия статуса
 func (bld *Build) GetStatusTitle() string {
 	switch bld.Status {
-	case StatusRunning:
+	case BuildStatusRunning:
 		return "В процессе"
-	case StatusSuccess:
+	case BuildStatusSuccess:
 		return "Успешно"
-	case StatusFailed:
+	case BuildStatusFailed:
 		return "Ошибка"
 	}
 
@@ -149,11 +149,11 @@ func (bld *Build) GetStatusTitle() string {
 // Хелпер для рендера статуса нужным цветом
 func (bld *Build) GetStatusColor() string {
 	switch bld.Status {
-	case StatusRunning:
+	case BuildStatusRunning:
 		return "info"
-	case StatusSuccess:
+	case BuildStatusSuccess:
 		return "success"
-	case StatusFailed:
+	case BuildStatusFailed:
 		return "danger"
 	}
 

@@ -13,6 +13,7 @@ type ProjectDeployPlan struct {
 	Title               string // Заголовок релиз плана (test/production/staging)
 	RemoteServerId      *int   // Сервер для удаленного деплоя, null = local
 	DeploymentDirectory string // Папка на удаленном сервере, куда будет развернут проект после деплоймента
+	project             *Project
 }
 
 // Создает модель релиз плана по строке из базы
@@ -51,6 +52,15 @@ func scanDeployPlans(rows *sql.Rows) (plans []*ProjectDeployPlan) {
 	}
 
 	return
+}
+
+// Возвращает проект плана
+func (pl *ProjectDeployPlan) GetProject() *Project {
+	if pl.project == nil {
+		pl.project = GetProjectById(pl.ProjectId)
+	}
+
+	return pl.project
 }
 
 // Сохранить план релиза

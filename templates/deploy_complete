@@ -1,0 +1,4 @@
+*{{ .Deploy.GetProjectDeployPlan.GetProject.Name }}*
+[#{{ .Deploy.Id }} Релиз завершен - {{ .Deploy.GetProjectDeployPlan.Title }}]({{ .DeployUrl }})
+
+*Статус релиза*: {{ .Deploy.GetStatusTitle }}

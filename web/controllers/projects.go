@@ -34,6 +34,7 @@ type ProjectDetailPage struct {
 	DeployPlans []*models.ProjectDeployPlan
 	VcsHooks    []*models.VcsHook
 	Builds      []*models.Build
+	Deploys     []*models.Deploy
 }
 
 // Страница активации проектов
@@ -85,6 +86,7 @@ func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, use
 		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
 		VcsHooks:    models.GetVcsHooksByProjectId(project.Id),
 		Builds:      models.GetAllBuildsByProjectId(project.Id),
+		Deploys:     models.GetAllDeploysByProjectId(project.Id),
 	}, user)
 }
 

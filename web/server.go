@@ -76,4 +76,8 @@ func (s *Server) route() {
 	http.Handle("/builds/run", s.authService.AuthMiddleware(buildC.Run))
 	http.Handle("/builds/status", s.authService.AuthMiddleware(buildC.Status))
 	http.Handle("/builds/artifact", s.authService.AuthMiddleware(buildC.Artifact))
+
+	deployC := controllers.NewDeploysController(s.authService, s.workerService)
+	http.Handle("/deployments/run", s.authService.AuthMiddleware(deployC.Release))
+	http.Handle("/deployments/status", s.authService.AuthMiddleware(deployC.Status))
 }

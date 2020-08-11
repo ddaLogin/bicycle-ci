@@ -4,7 +4,9 @@ then
   # Артефактом является весь проект целиком, архивируем всю папку проекта
   printf "Packaging the whole project start\n";
   ls -1 builds/project-$ID/;
-  zip -rq $ARTIFACT_ZIP_NAME builds/project-$ID/*;
+  cd builds/project-$ID/;
+  zip -rq ../../$ARTIFACT_ZIP_NAME *;
+  cd ../..;
   printf "Packaging the whole project end\n";
 else
   # Артефактом является папка или файл проекта
@@ -19,7 +21,9 @@ else
 
   # Архивируем если артефакт найден
   ls -1 builds/project-$ID/$ARTIFACT_DIR/;
-  zip -r $ARTIFACT_ZIP_NAME builds/project-$ID/$ARTIFACT_DIR/*;
+  cd builds/project-$ID/$ARTIFACT_DIR/;
+  zip -r ../../../$ARTIFACT_ZIP_NAME *;
+  cd ../../..;
   printf "Packaging success finished\n";
 fi
 exit 0;

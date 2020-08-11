@@ -5,12 +5,6 @@
             <h3 class="card-title">
                 <i class="fas fa-archive"></i> Сборка проекта &laquo;{{ .Content.Project.Name }}&raquo;
             </h3>
-
-            {{ if eq .Content.Build.Status 1 }}
-                <a href="/projects/detail?id={{ .Content.Project.Id }}" class="btn btn-xs btn-primary float-right">
-                    <i class="fas fa-cloud-upload-alt"></i> Развернуть
-                </a>
-            {{ end }}
         </div>
         <div class="card-body text-center">
 
@@ -79,10 +73,26 @@
         </div>
         <div class="card-footer">
             <hr>
-            <a href="/builds/run?id={{ .Content.Build.Id }}" class="btn btn-sm btn-primary {{ if eq .Content.Build.Status 0 }} disabled {{ end }}">
+            <a href="/builds/run?id={{ .Content.Build.ProjectBuildPlanId }}" class="btn btn-sm btn-warning {{ if eq .Content.Build.Status 0 }} disabled {{ end }}">
                 <i class="fas fa-redo-alt"></i> Повторить сборку
             </a>
-            <a href="/projects/detail?id={{ .Content.Project.Id }}" class="btn btn-sm btn-primary float-right">Ok</a>
+
+            {{ if eq .Content.Build.Status 1 }}
+                <div class="btn-group float-right">
+                    <a href="/projects/detail?id={{ .Content.Project.Id }}" class="btn btn-primary btn-sm ">Ok</a>
+                    <button type="button" class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        {{ range $key, $deployPlan := .Content.DeployPlans }}
+                            <a class="dropdown-item" href="/deployments/run?id={{ $deployPlan.Id }}&buildId={{ $.Content.Build.Id }}">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Развернуть по плану "{{ $deployPlan.Title }}"
+                            </a>
+                        {{ end }}
+                    </div>
+                </div>
+            {{ end }}
         </div>
     </div>
 </div>

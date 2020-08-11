@@ -1,8 +1,9 @@
 printf "Deploy project\n";
-if [ -z "$ARTIFACT_DIR" ]
+if [ -z "$ARTIFACT_ZIP" ]
 then
-      cp -a builds/project-$ID/* $DEPLOY_DIR
+  printf "Nothing to deploy\n";
+  exit 1;
 else
-      cp -a builds/project-$ID/$ARTIFACT_DIR/* $DEPLOY_DIR
+  unzip -o $ARTIFACT_ZIP -d $DEPLOY_DIR
 fi
 exit 0;

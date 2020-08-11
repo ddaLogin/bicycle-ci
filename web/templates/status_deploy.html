@@ -1,0 +1,71 @@
+{{define "content"}}
+<div class="col col-sm-8 offset-2">
+    <div class="card {{ if (eq .Content.Deploy.Status 0) }}card-primary{{ end }} {{ if (eq .Content.Deploy.Status 2) }}card-danger{{ end }} {{ if (eq .Content.Deploy.Status 1) }}card-success{{ end }}">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-cloud-upload-alt"></i> Релиз проекта &laquo;{{ .Content.Deploy.GetProjectDeployPlan.GetProject.Name }}&raquo;
+            </h3>
+        </div>
+        <div class="card-body text-center">
+
+            <table class="table table-sm text-left">
+                <tbody>
+                <tr>
+                    <th style="width: 200px">План релиза:</th>
+                    <td>{{ .Content.Deploy.GetProjectDeployPlan.Title }}</td>
+                </tr>
+                <tr>
+                    <th>Пользователь:</th>
+                    <td>{{ .Content.Deploy.GetUser.Login }}</td>
+                </tr>
+                <tr>
+                    <th>Время запуска:</th>
+                    <td>{{ .Content.Deploy.StartedAt }}</td>
+                </tr>
+                {{ if .Content.Deploy.EndedAt }}
+                    <tr>
+                        <th>Время завершения:</th>
+                        <td>{{ .Content.Deploy.EndedAt }}</td>
+                    </tr>
+                    <tr>
+                        <th>Продолжительность:</th>
+                        <td>{{ .Content.Deploy.GetProcessTime }}</td>
+                    </tr>
+                {{ end }}
+                </tbody>
+            </table>
+            <br>
+
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-list"></i> Процесс релиза</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body text-left">
+                    {{ if (eq .Content.Deploy.Status 0) }}
+                        <pre class="card-text text-info"> In process... </pre>
+                    {{ end }}
+
+                    {{if .Content.Deploy.StdOut }}
+                        <pre class="card-text text-info">{{ .Content.Deploy.StdOut }}</pre>
+                    {{end}}
+
+                    {{if .Content.Deploy.StdErr }}
+                        <pre class="card-text text-warning">{{ .Content.Deploy.StdErr }}</pre>
+                    {{end}}
+
+                    {{if .Content.Deploy.Error }}
+                        <pre class="card-text text-danger">{{ .Content.Deploy.Error }}</pre>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+<br>
+<br>
+{{end}}

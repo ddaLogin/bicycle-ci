@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,12 +34,12 @@ func (s *Service) RunBuild(buildPlan *models.ProjectBuildPlan, user *models.User
 		ProjectBuildPlanId: buildPlan.Id,
 		UserId:             user.Id,
 		StartedAt:          time.Now().Format("2006-01-02 15:04:05"),
-		Status:             models.StatusRunning,
+		Status:             models.BuildStatusRunning,
 	}
 	build.Save()
 
 	s.telegram.SendMessage(build.GetStartMessage(s.host, commits))
-	go s.process(build)
+	go s.processBuild(build)
 
 	s.clearOldArtifacts(s.artifactPerPlan, &build)
 
@@ -46,7 +47,7 @@ func (s *Service) RunBuild(buildPlan *models.ProjectBuildPlan, user *models.User
 }
 
 // Перенести в воркер
-func (s *Service) process(build models.Build) {
+func (s *Service) processBuild(build models.Build) {
 	plan := build.GetProjectBuildPlan()
 	dir, _ := os.Getwd()
 
@@ -59,7 +60,7 @@ func (s *Service) process(build models.Build) {
 	cloneStep.SetBuild(&build)
 	cloneStep.Save()
 	clone := exec.Command("bash", "./worker/scripts/upload.sh")
-	s.runStep(clone, cloneStep)
+	s.runBuildStep(clone, cloneStep)
 	cloneStep.Save()
 
 	var buildStep models.BuildStep
@@ -75,7 +76,7 @@ func (s *Service) process(build models.Build) {
 		reg := regexp.MustCompile("\r\n")
 		instructions := reg.ReplaceAllString(plan.BuildInstruction, " ")
 		buildCmd := exec.Command("bash", "-c", "docker run -v "+dir+"/builds/project-"+strconv.Itoa(int(plan.ProjectId))+":/app "+plan.GetDockerImage().Name+" sh /build.sh '"+instructions+"'")
-		s.runStep(buildCmd, &buildStep)
+		s.runBuildStep(buildCmd, &buildStep)
 		buildStep.Save()
 	}
 
@@ -89,27 +90,9 @@ func (s *Service) process(build models.Build) {
 		artifactStep.SetBuild(&build)
 		artifactStep.Save()
 
-		s.runStep(exec.Command("bash", "./worker/scripts/packaging.sh"), &artifactStep)
+		s.runBuildStep(exec.Command("bash", "./worker/scripts/packaging.sh"), &artifactStep)
 		artifactStep.Save()
 	}
-
-	//var deployStep models.BuildStep
-	//if buildStep.Error == "" {
-	//	deployStep = models.BuildStep{
-	//		BuildId: build.Id,
-	//		Name:    "Развертывание проекта",
-	//		Status:  models.StepStatusRunning,
-	//	}
-	//	deployStep.Save()
-	//
-	//	if *project.ServerId == 0 || project.ServerId == nil {
-	//		s.runStep(project, exec.Command("bash", "./worker/scripts/deploy.sh"), &deployStep)
-	//	} else {
-	//		s.runStep(project, exec.Command("bash", "./worker/scripts/deploy_remote.sh"), &deployStep)
-	//	}
-	//
-	//	deployStep.Save()
-	//}
 
 	cleanStep := models.BuildStep{
 		BuildId: build.Id,
@@ -118,13 +101,13 @@ func (s *Service) process(build models.Build) {
 	}
 	cleanStep.SetBuild(&build)
 	cleanStep.Save()
-	s.runStep(exec.Command("bash", "./worker/scripts/clear.sh"), &cleanStep)
+	s.runBuildStep(exec.Command("bash", "./worker/scripts/clear.sh"), &cleanStep)
 	cleanStep.Save()
 
 	if cloneStep.Status == models.StepStatusSuccess && buildStep.Status == models.StepStatusSuccess && cleanStep.Status == models.StepStatusSuccess && artifactStep.Status == models.StepStatusSuccess {
-		build.Status = models.StatusSuccess
+		build.Status = models.BuildStatusSuccess
 	} else {
-		build.Status = models.StatusFailed
+		build.Status = models.BuildStatusFailed
 	}
 
 	endTime := time.Now().Format("2006-01-02 15:04:05")
@@ -132,11 +115,10 @@ func (s *Service) process(build models.Build) {
 	build.Save()
 
 	s.telegram.SendMessage(build.GetCompleteMessage(s.host))
-
 }
 
 // Выполнить этап билда
-func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
+func (s *Service) runBuildStep(cmd *exec.Cmd, result *models.BuildStep) {
 	buildPlan := result.GetBuild().GetProjectBuildPlan()
 	project := buildPlan.GetProject()
 	var stdout, stderr bytes.Buffer
@@ -146,15 +128,6 @@ func (s *Service) runStep(cmd *exec.Cmd, result *models.BuildStep) {
 	env = append(env, fmt.Sprintf("SSH_KEY=%s", *project.DeployPrivate))
 	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", buildPlan.Artifact))
 	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%s", "builds/"+result.GetBuild().GetArtifactName()))
-
-	//env = append(env, "DEPLOY_DIR="+strings.TrimSpace(*project.DeployDir))
-
-	//if *project.ServerId != 0 && project.ServerId != nil {
-	//	server := models.GetServerById(*project.ServerId)
-	//	env = append(env, "USER="+server.Login)
-	//	env = append(env, "HOST="+server.Host)
-	//	env = append(env, "SSH_KEY_REMOTE="+server.DeployPrivate)
-	//}
 
 	cmd.Env = env
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
@@ -197,4 +170,70 @@ func (s *Service) clearOldArtifacts(maxCount int, build *models.Build) {
 			}
 		}
 	}
+}
+
+// Запуск деплоймента
+func (s *Service) RunDeployment(plan *models.ProjectDeployPlan, build *models.Build, user *models.User) models.Deploy {
+	deploy := models.Deploy{
+		ProjectDeployPlanId: plan.Id,
+		UserId:              user.Id,
+		StartedAt:           time.Now().Format("2006-01-02 15:04:05"),
+		Status:              models.DeployStatusRunning,
+	}
+	deploy.Save()
+
+	s.telegram.SendMessage(deploy.GetStartMessage(s.host))
+
+	go s.processDeploy(plan, &deploy, build)
+
+	return deploy
+}
+
+// Выполнение деплоймента
+func (s *Service) processDeploy(plan *models.ProjectDeployPlan, deploy *models.Deploy, build *models.Build) {
+	var stdout, stderr bytes.Buffer
+	var cmd *exec.Cmd
+	var env []string
+
+	env = append(env, fmt.Sprintf("ID=%d", plan.GetProject().Id))
+	env = append(env, fmt.Sprintf("DEPLOY_DIR=%s", strings.TrimSpace(plan.DeploymentDirectory)))
+	env = append(env, fmt.Sprintf("ARTIFACT_ZIP=builds/%s", build.GetArtifactName()))
+
+	if plan.RemoteServerId == nil || *plan.RemoteServerId == 0 {
+		cmd = exec.Command("bash", "./worker/scripts/deploy.sh")
+	} else {
+		cmd = exec.Command("bash", "./worker/scripts/deploy_remote.sh")
+
+		server := models.GetServerById(*plan.RemoteServerId)
+		env = append(env, "USER="+server.Login)
+		env = append(env, "HOST="+server.Host)
+		env = append(env, "SSH_KEY_REMOTE="+server.DeployPrivate)
+	}
+
+	cmd.Env = env
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
+	cmd.Stderr = io.MultiWriter(os.Stdout, &stderr)
+	err := cmd.Run()
+	if err != nil {
+		deploy.Error = err.Error()
+		deploy.Status = models.DeployStatusFailed
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		log.Println("Выполнение релиза завершилось с ошибкой", err, cmd)
+	}
+
+	deploy.StdOut = string(stdout.Bytes())
+	deploy.StdErr = string(stderr.Bytes())
+
+	if deploy.Status == models.DeployStatusRunning {
+		deploy.Status = models.DeployStatusSuccess
+	}
+
+	endTime := time.Now().Format("2006-01-02 15:04:05")
+	deploy.EndedAt = &endTime
+	deploy.Save()
+
+	s.telegram.SendMessage(deploy.GetCompleteMessage(s.host))
 }

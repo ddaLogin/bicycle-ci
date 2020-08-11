@@ -22,9 +22,10 @@ func NewBuildsController(auth *auth.Service, workerService *worker.Service) *Bui
 
 // Шаблон страницы сборки
 type StatusPage struct {
-	Project *models.Project
-	Steps   []*models.BuildStep
-	Build   *models.Build
+	Project     *models.Project
+	Steps       []*models.BuildStep
+	Build       *models.Build
+	DeployPlans []*models.ProjectDeployPlan
 }
 
 // Запуск сборки
@@ -67,9 +68,10 @@ func (c *BuildsController) Status(w http.ResponseWriter, req *http.Request, user
 	steps := models.GetStepsByBuildId(build.Id)
 
 	templates.Render(w, "web/templates/status.html", StatusPage{
-		Project: project,
-		Steps:   steps,
-		Build:   build,
+		Project:     project,
+		Steps:       steps,
+		Build:       build,
+		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
 	}, user)
 }
 
