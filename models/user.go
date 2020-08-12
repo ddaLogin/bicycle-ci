@@ -50,6 +50,42 @@ func scanUsers(rows *sql.Rows) (users []*User) {
 	return
 }
 
+// Сохранить пользователя
+func (u *User) Save() bool {
+	db := database.Db()
+	defer db.Close()
+
+	if u.Id == 0 {
+		result, err := db.Exec(
+			"insert into users (login, password, salt) values (?, ?, ?)",
+			u.Login, u.Password, u.Salt,
+		)
+
+		if err != nil {
+			log.Println("Не удалось сохранить нового пользователя", err, u)
+			return false
+		}
+
+		u.Id, err = result.LastInsertId()
+		if err != nil {
+			log.Println("Не удалось получить ID нового пользователя", err, u)
+			return false
+		}
+	} else {
+		_, err := db.Exec(
+			"UPDATE users SET login = ?, password = ?, salt = ? WHERE id = ?",
+			u.Login, u.Password, u.Salt, u.Id,
+		)
+
+		if err != nil {
+			log.Println("Не удалось обновить пользователя", err, u)
+			return false
+		}
+	}
+
+	return true
+}
+
 // Получить пользователя по логину и паролю
 func GetUserByLoginAndPassword(login string, password string) *User {
 	db := database.Db()
@@ -80,4 +116,35 @@ func GetUserById(id interface{}) *User {
 	user := scanUser(row)
 
 	return &user
+}
+
+// Получить пользователя по логину
+func GetUserByLogin(login interface{}) *User {
+	db := database.Db()
+	defer db.Close()
+
+	row := db.QueryRow("SELECT * FROM users WHERE login = ?", login)
+	if row == nil {
+		log.Println("Не удалось найти пользователя по login", login)
+		return nil
+	}
+
+	user := scanUser(row)
+
+	return &user
+}
+
+// Получить всех пользователей
+func GetAllUsers() []*User {
+	db := database.Db()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM users")
+	if err != nil {
+		log.Println("Не удалось найти всех пользователей")
+		return nil
+	}
+	defer rows.Close()
+
+	return scanUsers(rows)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -37,7 +38,8 @@ func NewService(sessionName string, secretKey string, loginRoute string) *Servic
 
 // Авторизовывает пользователя
 func (s *Service) Auth(login string, password string, w http.ResponseWriter, req *http.Request) bool {
-	password = s.hashPassword(password)
+	password = s.HashPassword(password)
+	fmt.Println(password)
 	user := models.GetUserByLoginAndPassword(login, password)
 
 	if user != nil && (models.User{}) != *user {
@@ -134,9 +136,20 @@ func (s *Service) generateToken(user *models.User) (authToken string) {
 }
 
 // Хеширование пароля
-func (s *Service) hashPassword(inputPassword string) string {
+func (s *Service) HashPassword(inputPassword string) string {
 	hashProvider := sha256.New()
 	hashProvider.Write([]byte(inputPassword))
 
 	return hex.EncodeToString(hashProvider.Sum(nil))
+}
+
+// Генерация соли
+func (s *Service) GenerateSalt(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	str := make([]rune, n)
+	for i := range str {
+		str[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(str)
 }

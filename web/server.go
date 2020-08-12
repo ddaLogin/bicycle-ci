@@ -80,4 +80,8 @@ func (s *Server) route() {
 	deployC := controllers.NewDeploysController(s.authService, s.workerService)
 	http.Handle("/deployments/run", s.authService.AuthMiddleware(deployC.Release))
 	http.Handle("/deployments/status", s.authService.AuthMiddleware(deployC.Status))
+
+	userC := controllers.NewUsersController(s.authService)
+	http.Handle("/users/registration", s.authService.AuthMiddleware(userC.Registration))
+	http.Handle("/users/list", s.authService.AuthMiddleware(userC.List))
 }

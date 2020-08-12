@@ -1,0 +1,31 @@
+{{define "content"}}
+    <div class="col col-sm-10 offset-1">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-user"></i> Список пользователей</h3>
+                <a href="/users/registration" class="btn btn-success btn-sm float-right">
+                    <i class="fas fa-plus"></i> Зарегестрировать пользователя
+                </a>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th style="width: 10px">#</th>
+                        <th>Логин</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range $key, $user := .Content.Users }}
+                        <tr>
+                            <th scope="row">{{ $user.Id }}</th>
+                            <td>{{ $user.Login}}</td>
+                        </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{{end}}
