@@ -39,7 +39,7 @@ func NewService(sessionName string, secretKey string, loginRoute string) *Servic
 // Авторизовывает пользователя
 func (s *Service) Auth(login string, password string, w http.ResponseWriter, req *http.Request) bool {
 	password = s.HashPassword(password)
-	fmt.Println(password)
+
 	user := models.GetUserByLoginAndPassword(login, password)
 
 	if user != nil && (models.User{}) != *user {
