@@ -176,6 +176,7 @@ func (s *Service) clearOldArtifacts(maxCount int, build *models.Build) {
 func (s *Service) RunDeployment(plan *models.ProjectDeployPlan, build *models.Build, user *models.User) models.Deploy {
 	deploy := models.Deploy{
 		ProjectDeployPlanId: plan.Id,
+		BuildId:             build.Id,
 		UserId:              user.Id,
 		StartedAt:           time.Now().Format("2006-01-02 15:04:05"),
 		Status:              models.DeployStatusRunning,

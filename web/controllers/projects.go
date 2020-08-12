@@ -85,8 +85,8 @@ func (c *ProjectController) Detail(w http.ResponseWriter, req *http.Request, use
 		BuildPlans:  models.GetProjectBuildPlansByProjectId(project.Id),
 		DeployPlans: models.GetProjectDeployPlansByProjectId(project.Id),
 		VcsHooks:    models.GetVcsHooksByProjectId(project.Id),
-		Builds:      models.GetAllBuildsByProjectId(project.Id),
-		Deploys:     models.GetAllDeploysByProjectId(project.Id),
+		Builds:      models.GetBuildsByProjectId(project.Id, 20),
+		Deploys:     models.GetDeploysByProjectId(project.Id, 20),
 	}, user)
 }
 

@@ -30,7 +30,7 @@ type LoginPage struct {
 // Главная страница
 func (c *IndexController) Index(w http.ResponseWriter, req *http.Request, user *models.User) {
 	templates.Render(w, "web/templates/index.html", IndexPage{
-		Builds: models.GetAllBuilds(),
+		Builds: models.GetBuilds(50),
 	}, user)
 }
 

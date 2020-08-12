@@ -129,19 +129,3 @@ func GetProjectDeployPlansByProjectId(projectId interface{}) []*ProjectDeployPla
 
 	return scanDeployPlans(rows)
 }
-
-// Возвращает кол-во релиз планов проекта
-func GetProjectDeployPlansCountByProjectId(projectId interface{}) int {
-	db := database.Db()
-	defer db.Close()
-
-	var cnt int
-
-	err := db.QueryRow("SELECT count(*) FROM project_deploy_plans WHERE project_id = ?", projectId).Scan(&cnt)
-	if err != nil {
-		log.Println("Не удалось посчитать кол-во релиз планов проекта")
-		return 0
-	}
-
-	return cnt
-}

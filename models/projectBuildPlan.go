@@ -161,19 +161,3 @@ func GetProjectBuildPlansByProjectId(projectId interface{}) []*ProjectBuildPlan 
 
 	return scanBuildPlans(rows)
 }
-
-// Возвращает кол-во планов сборок проекта
-func GetProjectBuildPlansCountByProjectId(projectId interface{}) int {
-	db := database.Db()
-	defer db.Close()
-
-	var cnt int
-
-	err := db.QueryRow("SELECT count(*) FROM project_build_plans WHERE project_id = ?", projectId).Scan(&cnt)
-	if err != nil {
-		log.Println("Не удалось кол-во планов сборки проекта")
-		return 0
-	}
-
-	return cnt
-}

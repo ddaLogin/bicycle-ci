@@ -265,11 +265,11 @@ func GetBuildById(id interface{}) *Build {
 }
 
 // Получить список результатов всех сборок
-func GetAllBuilds() []*Build {
+func GetBuilds(limit int) []*Build {
 	db := database.Db()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM builds ORDER BY started_at DESC")
+	rows, err := db.Query("SELECT * FROM builds ORDER BY started_at DESC LIMIT ?", limit)
 	if err != nil {
 		log.Println("Не удалось найти результаты всех сборок")
 		return nil
@@ -280,11 +280,11 @@ func GetAllBuilds() []*Build {
 }
 
 // Получить список результатов всех сборок одного проекта
-func GetAllBuildsByProjectId(projectId interface{}) []*Build {
+func GetBuildsByProjectId(projectId interface{}, limit int) []*Build {
 	db := database.Db()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT bld.* FROM builds as bld JOIN project_build_plans pbp on bld.project_build_plan_id = pbp.id WHERE pbp.project_id = ? ORDER BY bld.started_at DESC", projectId)
+	rows, err := db.Query("SELECT bld.* FROM builds as bld JOIN project_build_plans pbp on bld.project_build_plan_id = pbp.id WHERE pbp.project_id = ? ORDER BY bld.started_at DESC LIMIT ? ", projectId, limit)
 	if err != nil {
 		log.Println("Не удалось найти результаты всех сборок проекта")
 		return nil
@@ -292,4 +292,20 @@ func GetAllBuildsByProjectId(projectId interface{}) []*Build {
 	defer rows.Close()
 
 	return scanBuilds(rows)
+}
+
+// Возвращает кол-во сборок конкретного проекта
+func GetBuildsCountByProjectId(projectId interface{}) int {
+	db := database.Db()
+	defer db.Close()
+
+	var cnt int
+
+	err := db.QueryRow("SELECT count(*) FROM builds as bld JOIN project_build_plans pbp on bld.project_build_plan_id = pbp.id WHERE pbp.project_id = ?", projectId).Scan(&cnt)
+	if err != nil {
+		log.Println("Не удалось получить кол-во сборок проекта")
+		return 0
+	}
+
+	return cnt
 }

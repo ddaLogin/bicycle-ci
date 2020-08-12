@@ -83,14 +83,14 @@ func (pr *Project) GetUser() *User {
 	return pr.user
 }
 
-// Возвращает кол-во планов сборок проекта
-func (pr *Project) GetBuildPlanCount() int {
-	return GetProjectBuildPlansCountByProjectId(pr.Id)
+// Возвращает кол-во сборок проекта
+func (pr *Project) GetBuildsCount() int {
+	return GetBuildsCountByProjectId(pr.Id)
 }
 
-// Возвращает кол-во релиз планов проекта
-func (pr *Project) GetDeployPlanCount() int {
-	return GetProjectDeployPlansCountByProjectId(pr.Id)
+// Возвращает кол-во релизов проекта
+func (pr *Project) GetDeploysCount() int {
+	return GetDeploysCountByProjectId(pr.Id)
 }
 
 // Получить статус проекта

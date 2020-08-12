@@ -15,8 +15,8 @@
                         <th style="width: 10px">#</th>
                         <th>Имя проекта</th>
                         <th>Пользователь</th>
-                        <th>Кол-во планов по сборке</th>
-                        <th>Кол-во релиз планов</th>
+                        <th>Кол-во сборок</th>
+                        <th>Кол-во релизов</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -25,8 +25,8 @@
                             <th scope="row">{{ $project.Id }}</th>
                             <td><a href="/projects/detail?id={{ $project.Id }}">{{ $project.Name }}</a></td>
                             <td>{{ $project.GetUser.Login }}</td>
-                            <td>{{ $project.GetBuildPlanCount }}</td>
-                            <td>{{ $project.GetDeployPlanCount }}</td>
+                            <td>{{ $project.GetBuildsCount }}</td>
+                            <td>{{ $project.GetDeploysCount }}</td>
                         </tr>
                     {{ end }}
                     </tbody>

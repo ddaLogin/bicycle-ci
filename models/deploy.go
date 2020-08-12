@@ -18,6 +18,7 @@ const DeployStatusFailed = 2  // Сборка завершилась с ошиб
 type Deploy struct {
 	Id                  int64
 	ProjectDeployPlanId int64
+	BuildId             int64
 	UserId              int64
 	Status              int
 	StdOut              string
@@ -27,6 +28,7 @@ type Deploy struct {
 	EndedAt             *string
 	user                *User
 	projectDeployPlan   *ProjectDeployPlan
+	build               *Build
 }
 
 // Модель сообщения о начале релиза
@@ -46,6 +48,7 @@ func scanDeploy(row *sql.Row) (deploy Deploy) {
 	err := row.Scan(
 		&deploy.Id,
 		&deploy.ProjectDeployPlanId,
+		&deploy.BuildId,
 		&deploy.UserId,
 		&deploy.Status,
 		&deploy.StdOut,
@@ -68,6 +71,7 @@ func scanDeploys(rows *sql.Rows) (deploys []*Deploy) {
 		err := rows.Scan(
 			&deploy.Id,
 			&deploy.ProjectDeployPlanId,
+			&deploy.BuildId,
 			&deploy.UserId,
 			&deploy.Status,
 			&deploy.StdOut,
@@ -103,6 +107,15 @@ func (dpl *Deploy) GetUser() *User {
 	}
 
 	return dpl.user
+}
+
+// Получить сборку релиза релиз
+func (dpl *Deploy) GetBuild() *Build {
+	if dpl.build == nil {
+		dpl.build = GetBuildById(dpl.BuildId)
+	}
+
+	return dpl.build
 }
 
 // Хелпер для рендера названия статуса
@@ -209,8 +222,8 @@ func (dpl *Deploy) Save() bool {
 
 	if dpl.Id == 0 {
 		result, err := db.Exec(
-			"insert into deployments (project_deploy_plan_id, user_id, status, std_out, std_err, error, started_at, ended_at) values (?, ?, ?, ?, ?, ?, ?, ?)",
-			dpl.ProjectDeployPlanId, dpl.UserId, dpl.Status, dpl.StdOut, dpl.StdErr, dpl.Error, dpl.StartedAt, dpl.EndedAt,
+			"insert into deployments (project_deploy_plan_id, build_id, user_id, status, std_out, std_err, error, started_at, ended_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			dpl.ProjectDeployPlanId, dpl.BuildId, dpl.UserId, dpl.Status, dpl.StdOut, dpl.StdErr, dpl.Error, dpl.StartedAt, dpl.EndedAt,
 		)
 
 		if err != nil {
@@ -225,8 +238,8 @@ func (dpl *Deploy) Save() bool {
 		}
 	} else {
 		_, err := db.Exec(
-			"UPDATE deployments SET project_deploy_plan_id = ?, user_id = ?, status = ?, std_out = ?, std_err = ?, error = ?, started_at = ?, ended_at = ? WHERE id = ?",
-			dpl.ProjectDeployPlanId, dpl.UserId, dpl.Status, dpl.StdOut, dpl.StdErr, dpl.Error, dpl.StartedAt, dpl.EndedAt, dpl.Id,
+			"UPDATE deployments SET project_deploy_plan_id = ?, build_id = ?, user_id = ?, status = ?, std_out = ?, std_err = ?, error = ?, started_at = ?, ended_at = ? WHERE id = ?",
+			dpl.ProjectDeployPlanId, dpl.BuildId, dpl.UserId, dpl.Status, dpl.StdOut, dpl.StdErr, dpl.Error, dpl.StartedAt, dpl.EndedAt, dpl.Id,
 		)
 
 		if err != nil {
@@ -255,11 +268,11 @@ func GetDeployById(id interface{}) *Deploy {
 }
 
 // Получить список результатов всех релизов одного проекта
-func GetAllDeploysByProjectId(projectId interface{}) []*Deploy {
+func GetDeploysByProjectId(projectId interface{}, limit int) []*Deploy {
 	db := database.Db()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT dpl.* FROM deployments as dpl JOIN project_deploy_plans pdp on dpl.project_deploy_plan_id = pdp.id WHERE pdp.project_id = ? ORDER BY dpl.started_at DESC", projectId)
+	rows, err := db.Query("SELECT dpl.* FROM deployments as dpl JOIN project_deploy_plans pdp on dpl.project_deploy_plan_id = pdp.id WHERE pdp.project_id = ? ORDER BY dpl.started_at DESC LIMIT ? ", projectId, limit)
 	if err != nil {
 		log.Println("Не удалось найти результаты всех релизов проекта")
 		return nil
@@ -267,4 +280,20 @@ func GetAllDeploysByProjectId(projectId interface{}) []*Deploy {
 	defer rows.Close()
 
 	return scanDeploys(rows)
+}
+
+// Возвращает кол-во релизов конкретного проекта
+func GetDeploysCountByProjectId(projectId interface{}) int {
+	db := database.Db()
+	defer db.Close()
+
+	var cnt int
+
+	err := db.QueryRow("SELECT count(*) FROM deployments as dpl JOIN project_deploy_plans pdp on dpl.project_deploy_plan_id = pdp.id WHERE pdp.project_id = ?", projectId).Scan(&cnt)
+	if err != nil {
+		log.Println("Не удалось получить кол-во релизов проекта")
+		return 0
+	}
+
+	return cnt
 }

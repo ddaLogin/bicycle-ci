@@ -15,6 +15,14 @@
                     <td>{{ .Content.Deploy.GetProjectDeployPlan.Title }}</td>
                 </tr>
                 <tr>
+                    <th>Сборка:</th>
+                    <td>
+                        <a href="/builds/status?buildId={{ .Content.Deploy.GetBuild.Id }}">
+                            {{ .Content.Deploy.GetBuild.GetProjectBuildPlan.Title }} #{{ .Content.Deploy.GetBuild.Id }}
+                        </a>
+                    </td>
+                </tr>
+                <tr>
                     <th>Пользователь:</th>
                     <td>{{ .Content.Deploy.GetUser.Login }}</td>
                 </tr>
