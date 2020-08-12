@@ -4,6 +4,7 @@
 *Пользователь*: {{ .Build.GetUser.Login }}
 Среднее время сборки: {{ .Build.GetProjectBuildPlan.GetAvgBuildTime }}
 
+*Ветка*: {{ .Build.Branch }}
 {{ if .Commits }}
     *Комиты попавшие в сборку*:
     {{ range $key, $commit := .Commits }}{{ $commit }}{{ end }}

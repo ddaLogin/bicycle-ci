@@ -29,10 +29,11 @@ func NewService(telegram *telegram.Service, host string, port string, artifactPe
 }
 
 // Запускает сборку проекта
-func (s *Service) RunBuild(buildPlan *models.ProjectBuildPlan, user *models.User, commits []string) models.Build {
+func (s *Service) RunBuild(buildPlan *models.ProjectBuildPlan, user *models.User, branch string, commits []string) models.Build {
 	build := models.Build{
 		ProjectBuildPlanId: buildPlan.Id,
 		UserId:             user.Id,
+		Branch:             branch,
 		StartedAt:          time.Now().Format("2006-01-02 15:04:05"),
 		Status:             models.BuildStatusRunning,
 	}
@@ -125,6 +126,7 @@ func (s *Service) runBuildStep(cmd *exec.Cmd, result *models.BuildStep) {
 	var env []string
 	env = append(env, fmt.Sprintf("ID=%d", project.Id))
 	env = append(env, fmt.Sprintf("NAME=%s", project.Name))
+	env = append(env, fmt.Sprintf("BRANCH=%s", result.GetBuild().Branch))
 	env = append(env, fmt.Sprintf("SSH_KEY=%s", *project.DeployPrivate))
 	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", buildPlan.Artifact))
 	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%s", "builds/"+result.GetBuild().GetArtifactName()))

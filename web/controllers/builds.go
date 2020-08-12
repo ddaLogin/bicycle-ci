@@ -44,7 +44,7 @@ func (c *BuildsController) Run(w http.ResponseWriter, req *http.Request, user *m
 		return
 	}
 
-	build := c.workerService.RunBuild(buildPlan, user, nil)
+	build := c.workerService.RunBuild(buildPlan, user, "master", nil)
 
 	http.Redirect(w, req, fmt.Sprintf("/builds/status?buildId=%d", build.Id), http.StatusSeeOther)
 }

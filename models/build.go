@@ -20,6 +20,7 @@ type Build struct {
 	Id                 int64
 	ProjectBuildPlanId int64
 	UserId             int64
+	Branch             string
 	Status             int
 	StartedAt          string
 	EndedAt            *string
@@ -47,6 +48,7 @@ func scanBuild(row *sql.Row) (build Build) {
 		&build.Id,
 		&build.ProjectBuildPlanId,
 		&build.UserId,
+		&build.Branch,
 		&build.Status,
 		&build.StartedAt,
 		&build.EndedAt,
@@ -66,6 +68,7 @@ func scanBuilds(rows *sql.Rows) (builds []*Build) {
 			&build.Id,
 			&build.ProjectBuildPlanId,
 			&build.UserId,
+			&build.Branch,
 			&build.Status,
 			&build.StartedAt,
 			&build.EndedAt,
@@ -219,8 +222,8 @@ func (bld *Build) Save() bool {
 
 	if bld.Id == 0 {
 		result, err := db.Exec(
-			"insert into builds (project_build_plan_id, user_id, status, started_at, ended_at) values (?, ?, ?, ?, ?)",
-			bld.ProjectBuildPlanId, bld.UserId, bld.Status, bld.StartedAt, bld.EndedAt,
+			"insert into builds (project_build_plan_id, user_id, branch, status, started_at, ended_at) values (?, ?, ?, ?, ?, ?)",
+			bld.ProjectBuildPlanId, bld.UserId, bld.Branch, bld.Status, bld.StartedAt, bld.EndedAt,
 		)
 
 		if err != nil {
@@ -235,8 +238,8 @@ func (bld *Build) Save() bool {
 		}
 	} else {
 		_, err := db.Exec(
-			"UPDATE builds SET project_build_plan_id = ?, user_id = ?, status = ?, started_at = ?, ended_at = ? WHERE id = ?",
-			bld.ProjectBuildPlanId, bld.UserId, bld.Status, bld.StartedAt, bld.EndedAt, bld.Id,
+			"UPDATE builds SET project_build_plan_id = ?, user_id = ?, branch = ?, status = ?, started_at = ?, ended_at = ? WHERE id = ?",
+			bld.ProjectBuildPlanId, bld.UserId, bld.Branch, bld.Status, bld.StartedAt, bld.EndedAt, bld.Id,
 		)
 
 		if err != nil {

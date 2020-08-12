@@ -148,3 +148,19 @@ func GetAllUsers() []*User {
 
 	return scanUsers(rows)
 }
+
+//Получить пользователя по vcs id
+func GetUserByVcsId(vcsId interface{}) *User {
+	db := database.Db()
+	defer db.Close()
+
+	row := db.QueryRow("SELECT usr.* FROM users as usr JOIN vcs_providers vp on usr.id = vp.user_id WHERE vp.provider_account_id = ?", vcsId)
+	if row == nil {
+		log.Println("Не удалось найти пользователя по vcsId", vcsId)
+		return nil
+	}
+
+	user := scanUser(row)
+
+	return &user
+}

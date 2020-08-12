@@ -27,7 +27,10 @@ func NewHookController(auth *auth.Service, workerService *worker.Service) *VcsHo
 
 // Мдель хука получаемого от гитхаба
 type HookPayload struct {
-	Ref     string
+	Ref    string
+	Sender struct {
+		Id int
+	}
 	Commits []struct {
 		Message string
 	}
@@ -148,7 +151,13 @@ func (c *VcsHooksController) Trigger(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			c.workerService.RunBuild(vcsHook.GetProjectBuildPlan(), nil, commits)
+			user := models.GetUserByVcsId(payload.Sender.Id)
+
+			if user == nil || *user == (models.User{}) {
+				user = models.GetUserByLogin("Vcs-trigger")
+			}
+
+			c.workerService.RunBuild(vcsHook.GetProjectBuildPlan(), user, vcsHook.Branch, commits)
 
 			w.WriteHeader(200)
 			return
