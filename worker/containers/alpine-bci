@@ -1,16 +1,10 @@
 FROM alpine
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 RUN mkdir /app
 RUN chmod 777 /app
 
 RUN mkdir /.npm
 RUN chmod 777 /.npm
 
-VOLUME /app
-
 COPY ./scripts/build.sh /build.sh
 RUN chmod 777 /build.sh
-
-USER appuser
