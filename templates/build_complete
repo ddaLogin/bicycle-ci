@@ -1,6 +1,7 @@
 *{{ .Build.GetProjectBuildPlan.GetProject.Name }}*
 [#{{ .Build.Id }} Сборка завершена - {{ .Build.GetProjectBuildPlan.Title }}]({{ .BuildUrl }})
 
+*Пользователь*: {{ .Build.GetUser.Login }}
 *Статус шагов*:
 {{ range $key, $step := .Steps }}{{ $step.Name }}: {{ $step.GetStatusTitle }}\r\n{{ end }}
 

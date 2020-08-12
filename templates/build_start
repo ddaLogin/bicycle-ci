@@ -1,6 +1,7 @@
 *{{ .Build.GetProjectBuildPlan.GetProject.Name }}*
 [#{{ .Build.Id }} Запущена сборка - {{ .Build.GetProjectBuildPlan.Title }}]({{ .BuildUrl }})
 
+*Пользователь*: {{ .Build.GetUser.Login }}
 Среднее время сборки: {{ .Build.GetProjectBuildPlan.GetAvgBuildTime }}
 
 {{ if .Commits }}

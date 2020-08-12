@@ -1,2 +1,4 @@
 *{{ .Deploy.GetProjectDeployPlan.GetProject.Name }}*
 [#{{ .Deploy.Id }} Начало релиза - {{ .Deploy.GetProjectDeployPlan.Title }}]({{ .DeployUrl }})
+
+*Пользователь*: {{ .Deploy.GetUser.Login }}

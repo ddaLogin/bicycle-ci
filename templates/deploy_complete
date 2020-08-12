@@ -1,4 +1,5 @@
 *{{ .Deploy.GetProjectDeployPlan.GetProject.Name }}*
 [#{{ .Deploy.Id }} Релиз завершен - {{ .Deploy.GetProjectDeployPlan.Title }}]({{ .DeployUrl }})
 
+*Пользователь*: {{ .Deploy.GetUser.Login }}
 *Статус релиза*: {{ .Deploy.GetStatusTitle }}
