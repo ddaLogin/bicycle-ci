@@ -90,6 +90,7 @@ create table builds
         primary key,
     project_build_plan_id int                                 not null,
     user_id               int                                 not null,
+    branch                varchar(60)                         not null,
     status                int       default 0                 not null,
     started_at            timestamp default CURRENT_TIMESTAMP not null,
     ended_at              timestamp                           null,
