@@ -5,7 +5,7 @@ then
   printf "Packaging the whole project start\n";
   ls -1 builds/project-$ID/;
   cd builds/project-$ID/;
-  zip -rq ../../$ARTIFACT_ZIP_NAME *;
+  zip -rq ../$ARTIFACT_ZIP_NAME *;
   cd ../..;
   printf "Packaging the whole project end\n";
 else

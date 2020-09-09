@@ -129,7 +129,7 @@ func (s *Service) runBuildStep(cmd *exec.Cmd, result *models.BuildStep) {
 	env = append(env, fmt.Sprintf("BRANCH=%s", result.GetBuild().Branch))
 	env = append(env, fmt.Sprintf("SSH_KEY=%s", *project.DeployPrivate))
 	env = append(env, fmt.Sprintf("ARTIFACT_DIR=%s", buildPlan.Artifact))
-	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%s", "builds/"+result.GetBuild().GetArtifactName()))
+	env = append(env, fmt.Sprintf("ARTIFACT_ZIP_NAME=%s", result.GetBuild().GetArtifactName()))
 
 	cmd.Env = env
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdout)
