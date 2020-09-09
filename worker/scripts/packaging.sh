@@ -10,9 +10,9 @@ then
   printf "Packaging the whole project end\n";
 else
   # Артефактом является папка или файл проекта
-  if [[ -d $ARTIFACT_DIR ]]; then
+  if [[ -d builds/project-$ID/$ARTIFACT_DIR ]]; then
     printf "Packaging only \"$ARTIFACT_DIR\" dir\n";
-  elif [[ -f $ARTIFACT_DIR ]]; then
+  elif [[ -f builds/project-$ID/$ARTIFACT_DIR ]]; then
     printf "Packaging only \"$ARTIFACT_DIR\" file\n";
   else
     printf "Nothing to packaging, artifact \"$ARTIFACT_DIR\" not found\n";
