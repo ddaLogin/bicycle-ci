@@ -147,3 +147,25 @@ create table vcs_hooks
     constraint vcs_hooks_project_build_plans_id_fk
         foreign key (project_build_plan_id) references project_build_plans (id)
 ) charset = utf8;
+
+create table deployments
+(
+    id                     int auto_increment
+        primary key,
+    project_deploy_plan_id int                                 not null,
+    build_id               int                                 not null,
+    user_id                int                                 not null,
+    status                 int       default 0                 not null,
+    std_out                text                                null,
+    std_err                text                                null,
+    error                  text                                null,
+    started_at             timestamp default CURRENT_TIMESTAMP not null,
+    ended_at               timestamp                           null,
+    constraint deployments_builds_id_fk
+        foreign key (build_id) references builds (id),
+    constraint deployments_project_deploy_plans_id_fk
+        foreign key (project_deploy_plan_id) references project_deploy_plans (id),
+    constraint deployments_users_id_fk
+        foreign key (user_id) references users (id)
+)  charset = utf8;
+
